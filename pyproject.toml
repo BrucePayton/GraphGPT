@@ -1,0 +1,69 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "graphgpt-builder"
+version = "0.1.0"
+description = "Declarative, extensible compiler from versioned YAML workflows to native LangGraph"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+authors = [{ name = "GraphGPT contributors" }]
+dependencies = [
+  "langgraph>=1.0,<2.0",
+  "pydantic>=2.10,<3.0",
+  "PyYAML>=6.0,<7.0",
+  "typer>=0.15,<1.0",
+]
+
+[project.optional-dependencies]
+langchain = ["langchain>=1.0,<2.0"]
+cli = ["langgraph-cli[inmem]>=0.4,<1.0"]
+langsmith = ["langsmith>=0.4,<1.0"]
+langfuse = ["langfuse>=3.0,<4.0"]
+dev = [
+  "hatchling>=1.27",
+  "mypy>=1.15",
+  "pytest>=8.3",
+  "pytest-cov>=6.0",
+  "ruff>=0.11",
+]
+
+[project.scripts]
+graphgpt = "graphgpt.cli:app"
+
+[project.entry-points."graphgpt.nodes"]
+
+[project.entry-points."graphgpt.factories"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/graphgpt"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "/src",
+  "/tests",
+  "/docs",
+  "/schemas",
+  "/README.md",
+  "/LICENSE",
+  "/pyproject.toml",
+  "/uv.lock",
+]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+packages = ["graphgpt"]

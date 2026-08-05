@@ -1,0 +1,20 @@
+apiVersion: graphgpt.dev/v1alpha1
+kind: Workflow
+metadata:
+  name: rag
+spec:
+  state:
+    fields:
+      query: {type: string, required: true}
+      context: {type: array}
+      answer: {type: string}
+  security:
+    allowedModules: [nodes]
+  nodes:
+    retrieve: {use: python:nodes.retrieve}
+    generate: {use: python:nodes.generate}
+  edges:
+    - {from: $start, to: retrieve}
+    - {from: retrieve, to: generate}
+    - {from: generate, to: $end}
+

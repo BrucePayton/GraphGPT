@@ -1,0 +1,17 @@
+apiVersion: graphgpt.dev/v1alpha1
+kind: Workflow
+metadata:
+  name: tool_use
+spec:
+  state:
+    fields:
+      value: {type: integer, required: true}
+      result: {type: integer}
+  security:
+    allowedModules: [nodes]
+  nodes:
+    call_tool: {use: python:nodes.call_tool}
+  edges:
+    - {from: $start, to: call_tool}
+    - {from: call_tool, to: $end}
+

@@ -1,0 +1,19 @@
+apiVersion: graphgpt.dev/v1alpha1
+kind: Workflow
+metadata:
+  name: loop
+spec:
+  state:
+    fields:
+      count: {type: integer, required: true}
+  security:
+    allowedModules: [nodes]
+  nodes:
+    increment: {use: python:nodes.increment}
+  edges:
+    - {from: $start, to: increment}
+    - from: increment
+      route:
+        use: python:nodes.route
+        targets: [increment, $end]
+

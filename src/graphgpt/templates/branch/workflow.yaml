@@ -1,0 +1,24 @@
+apiVersion: graphgpt.dev/v1alpha1
+kind: Workflow
+metadata:
+  name: branch
+spec:
+  state:
+    fields:
+      approved: {type: boolean}
+      result: {type: string}
+  security:
+    allowedModules: [nodes]
+  nodes:
+    decide: {use: python:nodes.decide}
+    accept: {use: python:nodes.accept}
+    reject: {use: python:nodes.reject}
+  edges:
+    - {from: $start, to: decide}
+    - from: decide
+      route:
+        use: python:nodes.route
+        targets: [accept, reject]
+    - {from: accept, to: $end}
+    - {from: reject, to: $end}
+

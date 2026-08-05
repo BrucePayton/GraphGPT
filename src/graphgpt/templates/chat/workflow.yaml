@@ -1,0 +1,16 @@
+apiVersion: graphgpt.dev/v1alpha1
+kind: Workflow
+metadata:
+  name: chat
+spec:
+  state:
+    type: messages
+  security:
+    allowedModules: [nodes]
+  nodes:
+    reply:
+      use: python:nodes.reply
+  edges:
+    - {from: $start, to: reply}
+    - {from: reply, to: $end}
+

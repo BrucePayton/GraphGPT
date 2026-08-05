@@ -1,0 +1,298 @@
+{
+  "$defs": {
+    "EdgeModel": {
+      "additionalProperties": false,
+      "properties": {
+        "from": {
+          "title": "From",
+          "type": "string"
+        },
+        "route": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RouteModel"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "to": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "To"
+        }
+      },
+      "required": [
+        "from"
+      ],
+      "title": "EdgeModel",
+      "type": "object"
+    },
+    "MetadataModel": {
+      "additionalProperties": false,
+      "properties": {
+        "labels": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Labels",
+          "type": "object"
+        },
+        "name": {
+          "minLength": 1,
+          "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$",
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "MetadataModel",
+      "type": "object"
+    },
+    "NodeModel": {
+      "additionalProperties": false,
+      "properties": {
+        "metadata": {
+          "additionalProperties": true,
+          "title": "Metadata",
+          "type": "object"
+        },
+        "use": {
+          "minLength": 1,
+          "title": "Use",
+          "type": "string"
+        },
+        "with": {
+          "additionalProperties": true,
+          "title": "With",
+          "type": "object"
+        }
+      },
+      "required": [
+        "use"
+      ],
+      "title": "NodeModel",
+      "type": "object"
+    },
+    "RouteModel": {
+      "additionalProperties": false,
+      "properties": {
+        "pathMap": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Pathmap",
+          "type": "object"
+        },
+        "targets": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Targets",
+          "type": "array"
+        },
+        "use": {
+          "minLength": 1,
+          "title": "Use",
+          "type": "string"
+        }
+      },
+      "required": [
+        "use",
+        "targets"
+      ],
+      "title": "RouteModel",
+      "type": "object"
+    },
+    "RuntimeModel": {
+      "additionalProperties": false,
+      "properties": {
+        "checkpointer": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Checkpointer"
+        },
+        "interruptAfter": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Interruptafter",
+          "type": "array"
+        },
+        "interruptBefore": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Interruptbefore",
+          "type": "array"
+        },
+        "store": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Store"
+        }
+      },
+      "title": "RuntimeModel",
+      "type": "object"
+    },
+    "SecurityModel": {
+      "additionalProperties": false,
+      "properties": {
+        "allowedModules": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Allowedmodules",
+          "type": "array"
+        }
+      },
+      "title": "SecurityModel",
+      "type": "object"
+    },
+    "SpecModel": {
+      "additionalProperties": false,
+      "properties": {
+        "edges": {
+          "items": {
+            "$ref": "#/$defs/EdgeModel"
+          },
+          "minItems": 1,
+          "title": "Edges",
+          "type": "array"
+        },
+        "nodes": {
+          "additionalProperties": {
+            "$ref": "#/$defs/NodeModel"
+          },
+          "minProperties": 1,
+          "title": "Nodes",
+          "type": "object"
+        },
+        "runtime": {
+          "$ref": "#/$defs/RuntimeModel"
+        },
+        "security": {
+          "$ref": "#/$defs/SecurityModel"
+        },
+        "state": {
+          "$ref": "#/$defs/StateModel"
+        }
+      },
+      "required": [
+        "nodes",
+        "edges"
+      ],
+      "title": "SpecModel",
+      "type": "object"
+    },
+    "StateFieldModel": {
+      "additionalProperties": false,
+      "properties": {
+        "default": {
+          "default": null,
+          "title": "Default"
+        },
+        "reducer": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reducer"
+        },
+        "required": {
+          "default": false,
+          "title": "Required",
+          "type": "boolean"
+        },
+        "type": {
+          "default": "any",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "StateFieldModel",
+      "type": "object"
+    },
+    "StateModel": {
+      "additionalProperties": false,
+      "properties": {
+        "fields": {
+          "additionalProperties": {
+            "$ref": "#/$defs/StateFieldModel"
+          },
+          "title": "Fields",
+          "type": "object"
+        },
+        "type": {
+          "default": "dict",
+          "enum": [
+            "dict",
+            "messages"
+          ],
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "StateModel",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "apiVersion": {
+      "const": "graphgpt.dev/v1alpha1",
+      "title": "Apiversion",
+      "type": "string"
+    },
+    "kind": {
+      "const": "Workflow",
+      "title": "Kind",
+      "type": "string"
+    },
+    "metadata": {
+      "$ref": "#/$defs/MetadataModel"
+    },
+    "spec": {
+      "$ref": "#/$defs/SpecModel"
+    }
+  },
+  "required": [
+    "apiVersion",
+    "kind",
+    "metadata",
+    "spec"
+  ],
+  "title": "WorkflowDocument",
+  "type": "object"
+}
