@@ -1,4 +1,6 @@
+import sys
 from pathlib import Path
+from types import ModuleType
 
 import pytest
 
@@ -26,6 +28,25 @@ def test_compile_rejects_semantic_errors(tmp_path: Path) -> None:
 def test_observability_none_and_langsmith_are_zero_dependency() -> None:
     assert callback_for("none") is None
     assert callback_for("langsmith") is None
+
+
+def test_observability_langfuse_callback_and_missing_extra(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    langfuse = ModuleType("langfuse")
+    integration = ModuleType("langfuse.langchain")
+
+    class CallbackHandler:
+        pass
+
+    integration.CallbackHandler = CallbackHandler  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "langfuse", langfuse)
+    monkeypatch.setitem(sys.modules, "langfuse.langchain", integration)
+    assert isinstance(callback_for("langfuse"), CallbackHandler)
+
+    monkeypatch.setitem(sys.modules, "langfuse.langchain", None)
+    with pytest.raises(RuntimeError, match=r"langfuse.*extra"):
+        callback_for("langfuse")
 
 
 def test_registry_reports_missing_binding_and_bad_reference() -> None:

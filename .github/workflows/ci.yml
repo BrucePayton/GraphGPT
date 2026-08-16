@@ -15,9 +15,17 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           python-version: ${{ matrix.python-version }}
-      - run: uv sync --extra dev --extra langchain --locked
+      - run: uv sync --extra dev --extra langchain --extra cli --locked
       - run: uv run ruff check .
       - run: uv run mypy
-      - run: uv run pytest --cov=graphgpt --cov-report=term-missing
+      - run: uv run pytest --cov=graphgpt --cov-report=term-missing --cov-fail-under=90
       - run: uv build
-
+      - name: Smoke-test built wheel
+        run: |
+          graphgpt_wheel=$(find dist -name '*.whl' -print -quit)
+          uv venv "$RUNNER_TEMP/graphgpt-wheel-venv"
+          uv pip install --python "$RUNNER_TEMP/graphgpt-wheel-venv/bin/python" "$graphgpt_wheel"
+          "$RUNNER_TEMP/graphgpt-wheel-venv/bin/graphgpt" --version
+          "$RUNNER_TEMP/graphgpt-wheel-venv/bin/graphgpt" init "$RUNNER_TEMP/graphgpt-smoke" --template loop
+          "$RUNNER_TEMP/graphgpt-wheel-venv/bin/graphgpt" validate "$RUNNER_TEMP/graphgpt-smoke/workflow.yaml"
+          "$RUNNER_TEMP/graphgpt-wheel-venv/bin/graphgpt" run "$RUNNER_TEMP/graphgpt-smoke/workflow.yaml" --input '{"count": 0}'

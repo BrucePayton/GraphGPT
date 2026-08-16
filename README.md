@@ -24,7 +24,7 @@ uv run graphgpt init ./my-agent --template branch
 cd my-agent
 uv run graphgpt validate workflow.yaml
 uv run graphgpt run workflow.yaml --input '{"approved": true}'
-uv run langgraph dev -c langgraph.json
+uv run graphgpt dev --config langgraph.json
 ```
 
 若要使用 `graphgpt dev` 的官方 CLI 委托，可安装 `uv sync --extra cli`。Langfuse 追踪使用

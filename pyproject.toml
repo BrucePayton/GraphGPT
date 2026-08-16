@@ -55,6 +55,7 @@ include = [
 [tool.pytest.ini_options]
 addopts = "-q"
 testpaths = ["tests"]
+markers = ["integration: exercises optional external development tooling"]
 
 [tool.ruff]
 line-length = 100

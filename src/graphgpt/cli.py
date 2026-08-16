@@ -144,18 +144,24 @@ def export(
         typer.echo(rendered, nl=False)
 
 
-@app.command()
+@app.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
 def dev(
+    context: typer.Context,
     config: Annotated[Path, typer.Option("--config", "-c")] = Path("langgraph.json"),
-    extra_args: Annotated[list[str] | None, typer.Argument()] = None,
 ) -> None:
     """Delegate development serving to the official LangGraph CLI."""
     executable = shutil.which("langgraph")
     if not executable:
         typer.echo("langgraph CLI not found; install langgraph-cli[inmem]", err=True)
         raise typer.Exit(1)
+    config_path = config.expanduser().resolve()
+    if not config_path.is_file():
+        typer.echo(f"LangGraph config not found: {config}", err=True)
+        raise typer.Exit(1)
     result = subprocess.run(
-        [executable, "dev", "-c", str(config), *(extra_args or [])], check=False
+        [executable, "dev", "--config", config_path.name, *context.args],
+        cwd=config_path.parent,
+        check=False,
     )
     raise typer.Exit(result.returncode)
 
