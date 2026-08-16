@@ -8,4 +8,3 @@ coverage.xml
 dist/
 *.egg-info/
 .env
-.github/workflows/ci.yml

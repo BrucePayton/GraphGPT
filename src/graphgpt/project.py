@@ -33,7 +33,6 @@ def initialize_project(template: str, destination: Path) -> list[Path]:
     config.write_text(
         json.dumps(
             {
-                "$schema": "https://langgra.ph/schema.json",
                 "dependencies": ["."],
                 "graphs": {template: "./graph.py:graph"},
                 "env": ".env",
