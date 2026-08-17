@@ -12,7 +12,7 @@ def test_loads_normalized_ir(tmp_path: Path) -> None:
     graph = inspect_workflow(path)
     assert graph.name == "test_graph"
     assert [node.id for node in graph.nodes] == ["step"]
-    assert graph.ir_version == "0.1"
+    assert graph.ir_version == "0.2"
     assert validate_workflow(path) == []
 
 
@@ -85,6 +85,19 @@ def test_reports_reserved_node_names_and_duplicate_route_targets(tmp_path: Path)
     }
 
 
+def test_reports_invalid_command_and_fan_out_contracts(tmp_path: Path) -> None:
+    path = tmp_path / "workflow.yaml"
+    path.write_text(INVALID_CONTROL_WORKFLOW, encoding="utf-8")
+
+    diagnostics = validate_workflow(path)
+
+    assert {item.code for item in diagnostics} >= {
+        "GRAPHGPT-GRAPH-004",
+        "GRAPHGPT-GRAPH-013",
+        "GRAPHGPT-FANOUT-002",
+    }
+
+
 WORKFLOW = """\
 apiVersion: graphgpt.dev/v1alpha1
 kind: Workflow
@@ -99,4 +112,30 @@ spec:
   edges:
     - {from: $start, to: step}
     - {from: step, to: $end}
+"""
+
+INVALID_CONTROL_WORKFLOW = """\
+apiVersion: graphgpt.dev/v1alpha1
+kind: Workflow
+metadata:
+  name: invalid_control
+spec:
+  state:
+    fields:
+      results: {type: array}
+  nodes:
+    command:
+      use: registry:command
+      destinations: [missing]
+    seed: {use: registry:seed}
+    worker: {use: registry:worker, writes: [results]}
+  edges:
+    - {from: $start, to: command}
+    - {from: command, to: seed}
+    - from: seed
+      route:
+        use: registry:fan_out
+        mode: fan-out
+        targets: [worker]
+    - {from: worker, to: $end}
 """

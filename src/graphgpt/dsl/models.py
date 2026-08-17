@@ -32,12 +32,15 @@ class NodeModel(StrictModel):
     use: str = Field(min_length=1)
     with_: dict[str, Any] = Field(default_factory=dict, alias="with")
     metadata: dict[str, Any] = Field(default_factory=dict)
+    destinations: list[str] = Field(default_factory=list)
+    writes: list[str] = Field(default_factory=list)
 
 
 class RouteModel(StrictModel):
     use: str = Field(min_length=1)
     targets: list[str] = Field(min_length=1)
     path_map: dict[str, str] = Field(default_factory=dict, alias="pathMap")
+    mode: Literal["conditional", "fan-out"] = "conditional"
 
 
 class EdgeModel(StrictModel):

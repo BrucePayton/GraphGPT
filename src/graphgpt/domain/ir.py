@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from typing import Any, Literal
 
-IR_VERSION = "0.1"
+IR_VERSION = "0.2"
 BUILTIN_STATE_TYPES = frozenset(
     {
         "any",
@@ -38,6 +38,8 @@ class NodeIR:
     use: str
     config: dict[str, Any] = field(default_factory=dict)
     metadata: dict[str, Any] = field(default_factory=dict)
+    destinations: tuple[str, ...] = ()
+    writes: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -52,7 +54,7 @@ class EdgeIR:
     source: str
     target: str | None = None
     route: RouteIR | None = None
-    kind: Literal["direct", "conditional"] = "direct"
+    kind: Literal["direct", "conditional", "fan-out"] = "direct"
 
 
 @dataclass(frozen=True, slots=True)
