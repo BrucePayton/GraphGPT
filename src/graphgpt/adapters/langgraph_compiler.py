@@ -17,13 +17,18 @@ class LangGraphCompiler:
 
         state_schema = _make_state_schema(graph)
         builder = StateGraph(state_schema)
+        names = {"$start": START, "$end": END}
         for node in graph.nodes:
             builder.add_node(
                 node.id,
                 self._resolver.resolve_node(node.use, node.config),
                 metadata=node.metadata or None,
+                destinations=(
+                    tuple(names.get(target, target) for target in node.destinations)
+                    if node.destinations
+                    else None
+                ),
             )
-        names = {"$start": START, "$end": END}
         for edge in graph.edges:
             source = names.get(edge.source, edge.source)
             if edge.target:

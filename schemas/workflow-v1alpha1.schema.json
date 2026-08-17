@@ -63,6 +63,13 @@
     "NodeModel": {
       "additionalProperties": false,
       "properties": {
+        "destinations": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Destinations",
+          "type": "array"
+        },
         "metadata": {
           "additionalProperties": true,
           "title": "Metadata",
@@ -77,6 +84,13 @@
           "additionalProperties": true,
           "title": "With",
           "type": "object"
+        },
+        "writes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Writes",
+          "type": "array"
         }
       },
       "required": [
@@ -88,6 +102,15 @@
     "RouteModel": {
       "additionalProperties": false,
       "properties": {
+        "mode": {
+          "default": "conditional",
+          "enum": [
+            "conditional",
+            "fan-out"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
         "pathMap": {
           "additionalProperties": {
             "type": "string"

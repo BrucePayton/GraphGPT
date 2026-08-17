@@ -17,7 +17,14 @@ def to_ir(document: WorkflowDocument) -> GraphIR:
         for name, item in sorted(spec.state.fields.items())
     )
     nodes = tuple(
-        NodeIR(id=name, use=item.use, config=item.with_, metadata=item.metadata)
+        NodeIR(
+            id=name,
+            use=item.use,
+            config=item.with_,
+            metadata=item.metadata,
+            destinations=tuple(item.destinations),
+            writes=tuple(item.writes),
+        )
         for name, item in sorted(spec.nodes.items())
     )
     edges = tuple(
@@ -33,7 +40,7 @@ def to_ir(document: WorkflowDocument) -> GraphIR:
                 if item.route
                 else None
             ),
-            kind="conditional" if item.route else "direct",
+            kind=item.route.mode if item.route else "direct",
         )
         for item in spec.edges
     )
@@ -53,4 +60,3 @@ def to_ir(document: WorkflowDocument) -> GraphIR:
         allowed_modules=tuple(spec.security.allowed_modules),
         metadata={"labels": document.metadata.labels},
     )
-
