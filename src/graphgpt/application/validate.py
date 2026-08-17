@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import defaultdict, deque
 
 from graphgpt.domain.diagnostics import Diagnostic, Severity
-from graphgpt.domain.ir import GraphIR
+from graphgpt.domain.ir import BUILTIN_REDUCERS, BUILTIN_STATE_TYPES, GraphIR
 
 START = "$start"
 END = "$end"
@@ -14,6 +14,35 @@ def validate_ir(graph: GraphIR) -> list[Diagnostic]:
     nodes = {node.id for node in graph.nodes}
     valid = nodes | {START, END}
     adjacency: dict[str, set[str]] = defaultdict(set)
+
+    for node_ir in graph.nodes:
+        if node_ir.id in {START, END}:
+            diagnostics.append(
+                _error(
+                    "GRAPH-010",
+                    f"spec.nodes.{node_ir.id}",
+                    f"'{node_ir.id}' is reserved for graph control flow",
+                )
+            )
+
+    for state_field in graph.state_fields:
+        path = f"spec.state.fields.{state_field.name}"
+        if state_field.type not in BUILTIN_STATE_TYPES:
+            diagnostics.append(
+                _error(
+                    "STATE-001",
+                    path + ".type",
+                    f"unsupported state type '{state_field.type}'",
+                )
+            )
+        if state_field.reducer and state_field.reducer not in BUILTIN_REDUCERS:
+            diagnostics.append(
+                _error(
+                    "STATE-002",
+                    path + ".reducer",
+                    f"unsupported reducer '{state_field.reducer}'",
+                )
+            )
 
     for index, edge in enumerate(graph.edges):
         path = f"spec.edges[{index}]"
@@ -28,6 +57,14 @@ def validate_ir(graph: GraphIR) -> list[Diagnostic]:
             elif edge.source in valid:
                 adjacency[edge.source].add(target)
         if edge.route:
+            if len(edge.route.targets) != len(set(edge.route.targets)):
+                diagnostics.append(
+                    _error(
+                        "GRAPH-011",
+                        path + ".route.targets",
+                        "conditional route targets must be unique",
+                    )
+                )
             invalid_mappings = set(edge.route.path_map.values()) - set(edge.route.targets)
             if invalid_mappings:
                 diagnostics.append(
@@ -39,19 +76,19 @@ def validate_ir(graph: GraphIR) -> list[Diagnostic]:
                 )
 
     referenced_policies = set(graph.runtime.interrupt_before) | set(graph.runtime.interrupt_after)
-    for node in sorted(referenced_policies - nodes):
+    for node_id in sorted(referenced_policies - nodes):
         diagnostics.append(
-            _error("GRAPH-009", "spec.runtime", f"runtime references unknown node '{node}'")
+            _error("GRAPH-009", "spec.runtime", f"runtime references unknown node '{node_id}'")
         )
 
     reachable = _reachable(adjacency, START)
-    for node in sorted(nodes - reachable):
+    for node_id in sorted(nodes - reachable):
         diagnostics.append(
             Diagnostic(
                 code="GRAPH-005",
                 severity=Severity.WARNING,
-                path=f"spec.nodes.{node}",
-                message=f"node '{node}' is unreachable from $start",
+                path=f"spec.nodes.{node_id}",
+                message=f"node '{node_id}' is unreachable from $start",
                 hint="Add an incoming edge or remove the node.",
             )
         )

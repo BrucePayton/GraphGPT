@@ -13,12 +13,18 @@ def initialize_project(template: str, destination: Path) -> list[Path]:
     if template not in TEMPLATES:
         raise ValueError(f"unknown template '{template}'; choose from {', '.join(TEMPLATES)}")
     source = Path(__file__).parent / "templates" / template
+    template_files = _template_files(source)
     destination.mkdir(parents=True, exist_ok=True)
+    generated_names = ("graph.py", "langgraph.json", "pyproject.toml", ".env")
+    targets = [*(destination / item.name for item in template_files)]
+    targets.extend(destination / name for name in generated_names)
+    existing = [target for target in targets if target.exists()]
+    if existing:
+        raise FileExistsError(f"refusing to overwrite {existing[0]}")
+
     created: list[Path] = []
-    for item in _template_files(source):
+    for item in template_files:
         target = destination / item.name
-        if target.exists():
-            raise FileExistsError(f"refusing to overwrite {target}")
         shutil.copy2(item, target)
         created.append(target)
     graph_module = destination / "graph.py"

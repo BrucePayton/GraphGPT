@@ -4,6 +4,23 @@ from dataclasses import asdict, dataclass, field
 from typing import Any, Literal
 
 IR_VERSION = "0.1"
+BUILTIN_STATE_TYPES = frozenset(
+    {
+        "any",
+        "string",
+        "str",
+        "integer",
+        "int",
+        "number",
+        "float",
+        "boolean",
+        "bool",
+        "object",
+        "array",
+        "messages",
+    }
+)
+BUILTIN_REDUCERS = frozenset({"add", "messages"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -61,4 +78,3 @@ class GraphIR:
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
-
