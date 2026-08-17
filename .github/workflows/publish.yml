@@ -43,7 +43,7 @@ jobs:
           RELEASE_TAG: ${{ inputs.tag }}
         run: |
           mkdir -p dist
-          gh release download "$RELEASE_TAG" --pattern 'graphgpt_builder-*.whl' --pattern 'graphgpt_builder-*.tar.gz' --dir dist
+          gh release download "$RELEASE_TAG" --repo "${{ github.repository }}" --pattern 'graphgpt_builder-*.whl' --pattern 'graphgpt_builder-*.tar.gz' --dir dist
 
       - name: Smoke-test wheel
         run: |
