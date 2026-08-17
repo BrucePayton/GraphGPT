@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from importlib import import_module
 from typing import Any, Literal
 
 
@@ -9,7 +10,7 @@ def callback_for(provider: Literal["langsmith", "langfuse", "none"]) -> Any | No
         # LangSmith tracing is enabled by its standard environment variables.
         return None
     try:
-        from langfuse.langchain import CallbackHandler  # type: ignore[import-not-found]
+        callback_handler = import_module("langfuse.langchain").CallbackHandler
     except ImportError as exc:
         raise RuntimeError("Install GraphGPT with the 'langfuse' extra") from exc
-    return CallbackHandler()
+    return callback_handler()

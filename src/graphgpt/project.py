@@ -15,7 +15,7 @@ def initialize_project(template: str, destination: Path) -> list[Path]:
     source = Path(__file__).parent / "templates" / template
     destination.mkdir(parents=True, exist_ok=True)
     created: list[Path] = []
-    for item in source.iterdir():
+    for item in _template_files(source):
         target = destination / item.name
         if target.exists():
             raise FileExistsError(f"refusing to overwrite {target}")
@@ -61,6 +61,20 @@ def initialize_project(template: str, destination: Path) -> list[Path]:
     )
     created.append(env_file)
     return created
+
+
+def _template_files(source: Path) -> list[Path]:
+    """Return deterministic, distributable template files only."""
+    return sorted(
+        (
+            item
+            for item in source.iterdir()
+            if item.is_file()
+            and not item.name.startswith(".")
+            and item.suffix not in {".pyc", ".pyo"}
+        ),
+        key=lambda item: item.name,
+    )
 
 
 def to_mermaid(graph: GraphIR) -> str:
