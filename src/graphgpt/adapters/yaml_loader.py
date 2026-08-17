@@ -17,7 +17,20 @@ from graphgpt.dsl.models import WorkflowDocument
 
 class SafeYamlWorkflowLoader:
     def load(self, path: Path) -> WorkflowDocument:
-        source = path.read_text(encoding="utf-8")
+        try:
+            source = path.read_text(encoding="utf-8")
+        except OSError as exc:
+            raise GraphGPTError(
+                [
+                    Diagnostic(
+                        code="GRAPHGPT-IO-001",
+                        severity=Severity.ERROR,
+                        path="$",
+                        message=f"could not read workflow '{path}': {exc.strerror or exc}",
+                        hint="Check that the workflow exists and is readable.",
+                    )
+                ]
+            ) from exc
         try:
             data = yaml.safe_load(source)
             root = yaml.compose(source, Loader=yaml.SafeLoader)

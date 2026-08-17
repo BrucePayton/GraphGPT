@@ -26,3 +26,20 @@ def test_template_files_ignore_runtime_artifacts(tmp_path: Path) -> None:
     (tmp_path / "__pycache__").mkdir()
 
     assert [path.name for path in _template_files(tmp_path)] == ["nodes.py", "workflow.yaml"]
+
+
+def test_init_preflights_all_outputs_before_writing(tmp_path: Path) -> None:
+    output = tmp_path / "agent"
+    output.mkdir()
+    graph_module = output / "graph.py"
+    graph_module.write_text("# keep me\n", encoding="utf-8")
+
+    try:
+        initialize_project("branch", output)
+    except FileExistsError as exc:
+        assert str(graph_module) in str(exc)
+    else:
+        raise AssertionError("expected an existing generated file to block initialization")
+
+    assert graph_module.read_text(encoding="utf-8") == "# keep me\n"
+    assert sorted(path.name for path in output.iterdir()) == ["graph.py"]

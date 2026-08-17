@@ -34,7 +34,7 @@ def test_cli_validate_inspect_schema_export_and_doctor(tmp_path: Path) -> None:
 
     doctor = runner.invoke(app, ["doctor"])
     assert doctor.exit_code == 0
-    assert "GraphGPT 0.1.1" in doctor.stdout
+    assert "GraphGPT 0.1.2" in doctor.stdout
 
 
 def test_cli_init_and_bad_input(tmp_path: Path) -> None:
@@ -48,6 +48,14 @@ def test_cli_init_and_bad_input(tmp_path: Path) -> None:
     validated = runner.invoke(app, ["validate", str(invalid), "--output", "json"])
     assert validated.exit_code == 1
     assert "GRAPHGPT-SCHEMA-001" in validated.stdout
+
+    missing = runner.invoke(
+        app,
+        ["validate", str(tmp_path / "missing.yaml"), "--output", "json"],
+    )
+    assert missing.exit_code == 1
+    assert "GRAPHGPT-IO-001" in missing.stdout
+    assert "Traceback" not in missing.output
 
 
 def test_cli_run_stream_export_files_and_version(tmp_path: Path) -> None:
@@ -79,7 +87,7 @@ def test_cli_run_stream_export_files_and_version(tmp_path: Path) -> None:
 
     version = runner.invoke(app, ["--version"])
     assert version.exit_code == 0
-    assert version.stdout.strip() == "0.1.1"
+    assert version.stdout.strip() == "0.1.2"
 
 
 @pytest.mark.parametrize(

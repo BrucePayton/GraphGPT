@@ -108,7 +108,7 @@ def init(
     """Create a LangGraph CLI-ready GraphGPT project."""
     try:
         created = initialize_project(template, destination)
-    except (ValueError, FileExistsError) as exc:
+    except (ValueError, OSError) as exc:
         typer.echo(str(exc), err=True)
         raise typer.Exit(1) from exc
     typer.echo(f"Created {len(created)} files in {destination}")
