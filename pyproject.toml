@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "graphgpt-builder"
-version = "0.1.0"
+version = "0.1.1"
 description = "Declarative, extensible compiler from versioned YAML workflows to native LangGraph"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -39,6 +39,7 @@ graphgpt = "graphgpt.cli:app"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/graphgpt"]
+exclude = ["**/__pycache__/**", "**/*.pyc", "**/*.pyo"]
 
 [tool.hatch.build.targets.sdist]
 include = [
