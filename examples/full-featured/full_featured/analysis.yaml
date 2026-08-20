@@ -1,0 +1,32 @@
+apiVersion: graphgpt.dev/v1alpha1
+kind: Workflow
+metadata:
+  name: analysis
+spec:
+  state:
+    fields:
+      numbers: {type: array, required: true}
+      normalized: {type: array}
+      summary: {type: string}
+  security:
+    allowedModules: [full_featured]
+  nodes:
+    normalize:
+      use: python:full_featured.nodes.normalize
+      retry:
+        initialInterval: 0.001
+        backoffFactor: 1
+        maxInterval: 0.001
+        maxAttempts: 3
+        jitter: false
+      writes: [normalized]
+    summarize:
+      use: python:full_featured.nodes.summarize
+      cache: {ttl: 300}
+      writes: [summary]
+  edges:
+    - {from: $start, to: normalize}
+    - {from: normalize, to: summarize}
+    - {from: summarize, to: $end}
+  runtime:
+    cache: memory

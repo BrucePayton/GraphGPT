@@ -1,0 +1,61 @@
+apiVersion: graphgpt.dev/v1alpha1
+kind: Workflow
+metadata:
+  name: full_featured
+  labels: {example: kitchen-sink}
+spec:
+  state:
+    fields:
+      request: {type: string, required: true}
+      items: {type: array}
+      results: {type: array, reducer: add}
+      summary: {type: string}
+      decision: {type: string}
+      secret_status: {type: string}
+      audit: {type: array, reducer: add}
+  security:
+    allowedModules: [full_featured]
+  nodes:
+    prepare:
+      use: plugin:demo/prepare
+      with:
+        prefix: example
+        apiKey: ${GRAPHGPT_DEMO_API_KEY}
+      metadata: {layer: plugin}
+      writes: [items, secret_status, audit]
+    worker:
+      use: python:full_featured.nodes.worker
+      writes: [results]
+    analyze:
+      subgraph:
+        path: analysis.yaml
+        input: {results: numbers}
+        output: {summary: summary}
+        persistence: stateless
+      metadata: {layer: subgraph}
+    decide:
+      use: python:full_featured.nodes.decide
+      destinations: [approved, rejected]
+    approved:
+      use: python:full_featured.nodes.approved
+      writes: [decision, audit]
+    rejected:
+      use: python:full_featured.nodes.rejected
+      writes: [decision, audit]
+    review:
+      use: python:full_featured.nodes.review
+      writes: [audit]
+  edges:
+    - {from: $start, to: prepare}
+    - from: prepare
+      route:
+        use: plugin:demo/fanout
+        mode: fan-out
+        targets: [worker]
+    - {from: worker, to: analyze}
+    - {from: analyze, to: decide}
+    - {from: approved, to: review}
+    - {from: rejected, to: review}
+    - {from: review, to: $end}
+  runtime:
+    checkpointer: memory

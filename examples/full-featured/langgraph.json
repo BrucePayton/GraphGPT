@@ -1,0 +1,7 @@
+{
+  "dependencies": ["."],
+  "graphs": {
+    "full_featured": "./full_featured/server_graph.py:graph"
+  },
+  "env": ".env"
+}
