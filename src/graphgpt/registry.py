@@ -9,6 +9,7 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Literal, NoReturn, cast
 
+from graphgpt.application.secrets import resolve_environment_refs, validate_secret_config
 from graphgpt.domain.diagnostics import Diagnostic, GraphGPTError, Severity
 from graphgpt.plugin import (
     LEGACY_NODE_ENTRY_POINT_GROUP,
@@ -43,6 +44,13 @@ class BindingRegistry:
                 self._plugin_points.setdefault(point.name, []).append(point)
 
     def resolve_node(self, reference: str, config: dict[str, Any]) -> Any:
+        secret_diagnostics = validate_secret_config(config, f"binding.{reference}")
+        if secret_diagnostics:
+            raise GraphGPTError(secret_diagnostics)
+        config = cast(
+            dict[str, Any],
+            resolve_environment_refs(config, f"binding.{reference}"),
+        )
         if reference == "langchain:model":
             return _make_model_node(config)
         if reference == "langchain:agent":
