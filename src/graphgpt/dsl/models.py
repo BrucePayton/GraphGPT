@@ -40,14 +40,28 @@ class CachePolicyModel(StrictModel):
     ttl: int | None = Field(default=None, gt=0)
 
 
+class SubgraphModel(StrictModel):
+    path: str = Field(min_length=1)
+    input_map: dict[str, str] = Field(default_factory=dict, alias="input")
+    output_map: dict[str, str] = Field(default_factory=dict, alias="output")
+    persistence: Literal["per-invocation", "per-thread", "stateless"] = "per-invocation"
+
+
 class NodeModel(StrictModel):
-    use: str = Field(min_length=1)
+    use: str | None = Field(default=None, min_length=1)
+    subgraph: SubgraphModel | None = None
     with_: dict[str, Any] = Field(default_factory=dict, alias="with")
     metadata: dict[str, Any] = Field(default_factory=dict)
     destinations: list[str] = Field(default_factory=list)
     writes: list[str] = Field(default_factory=list)
     retry: RetryPolicyModel | None = None
     cache: CachePolicyModel | None = None
+
+    @model_validator(mode="after")
+    def exactly_one_action(self) -> NodeModel:
+        if (self.use is None) == (self.subgraph is None):
+            raise ValueError("a node must define exactly one of 'use' or 'subgraph'")
+        return self
 
 
 class RouteModel(StrictModel):

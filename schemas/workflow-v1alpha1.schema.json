@@ -117,10 +117,29 @@
           ],
           "default": null
         },
+        "subgraph": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SubgraphModel"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "use": {
-          "minLength": 1,
-          "title": "Use",
-          "type": "string"
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Use"
         },
         "with": {
           "additionalProperties": true,
@@ -135,9 +154,6 @@
           "type": "array"
         }
       },
-      "required": [
-        "use"
-      ],
       "title": "NodeModel",
       "type": "object"
     },
@@ -378,6 +394,45 @@
         }
       },
       "title": "StateModel",
+      "type": "object"
+    },
+    "SubgraphModel": {
+      "additionalProperties": false,
+      "properties": {
+        "input": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Input",
+          "type": "object"
+        },
+        "output": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Output",
+          "type": "object"
+        },
+        "path": {
+          "minLength": 1,
+          "title": "Path",
+          "type": "string"
+        },
+        "persistence": {
+          "default": "per-invocation",
+          "enum": [
+            "per-invocation",
+            "per-thread",
+            "stateless"
+          ],
+          "title": "Persistence",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "title": "SubgraphModel",
       "type": "object"
     }
   },
