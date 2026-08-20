@@ -13,6 +13,7 @@ import typer
 
 from graphgpt import __version__
 from graphgpt.api import compile_workflow, inspect_workflow, validate_workflow
+from graphgpt.application.secrets import redact_secrets
 from graphgpt.domain.diagnostics import GraphGPTError, Severity
 from graphgpt.dsl.models import WorkflowDocument
 from graphgpt.observability import callback_for
@@ -65,7 +66,9 @@ def validate(
 def inspect_command(path: Path) -> None:
     """Print deterministic normalized IR as JSON."""
     try:
-        typer.echo(json.dumps(inspect_workflow(path).to_dict(), indent=2, sort_keys=True))
+        typer.echo(
+            json.dumps(redact_secrets(inspect_workflow(path).to_dict()), indent=2, sort_keys=True)
+        )
     except GraphGPTError as exc:
         _emit_diagnostics(exc.diagnostics, OutputFormat.HUMAN)
         raise typer.Exit(1) from exc
@@ -179,7 +182,7 @@ def export(
     if format == "mermaid":
         rendered = to_mermaid(graph)
     elif format == "json":
-        rendered = json.dumps(graph.to_dict(), indent=2, sort_keys=True) + "\n"
+        rendered = json.dumps(redact_secrets(graph.to_dict()), indent=2, sort_keys=True) + "\n"
     else:
         raise typer.BadParameter("format must be mermaid or json")
     if output:

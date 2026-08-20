@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict, deque
 
+from graphgpt.application.secrets import validate_secret_config
 from graphgpt.domain.diagnostics import Diagnostic, Severity
 from graphgpt.domain.ir import BUILTIN_REDUCERS, BUILTIN_STATE_TYPES, GraphIR
 
@@ -22,6 +23,7 @@ def validate_ir(graph: GraphIR) -> list[Diagnostic]:
 
     for node_ir in graph.nodes:
         node_path = f"spec.nodes.{node_ir.id}"
+        diagnostics.extend(validate_secret_config(node_ir.config, node_path + ".with"))
         if node_ir.retry and node_ir.retry.max_interval < node_ir.retry.initial_interval:
             diagnostics.append(
                 _error(
