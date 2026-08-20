@@ -6,9 +6,17 @@ from contextlib import contextmanager
 from importlib import import_module
 from importlib.metadata import entry_points
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any, Literal, NoReturn, cast
 
 from graphgpt.domain.diagnostics import Diagnostic, GraphGPTError, Severity
+from graphgpt.plugin import (
+    LEGACY_NODE_ENTRY_POINT_GROUP,
+    PLUGIN_ENTRY_POINT_GROUP,
+    GraphGPTPlugin,
+    PluginCapability,
+    validate_plugin,
+)
 
 
 class BindingRegistry:
@@ -25,10 +33,14 @@ class BindingRegistry:
         self._bindings = dict(bindings or {})
         self._allowed_modules = allowed_modules
         self._search_path = search_path.resolve() if search_path else None
-        self._plugins: dict[str, Any] = {}
+        self._legacy_plugins: dict[str, Any] = {}
+        self._plugin_points: dict[str, list[Any]] = {}
+        self._loaded_plugins: dict[str, GraphGPTPlugin] = {}
         if discover_plugins:
-            for point in entry_points(group="graphgpt.nodes"):
-                self._plugins.setdefault(point.name, point)
+            for point in entry_points(group=LEGACY_NODE_ENTRY_POINT_GROUP):
+                self._legacy_plugins.setdefault(point.name, point)
+            for point in entry_points(group=PLUGIN_ENTRY_POINT_GROUP):
+                self._plugin_points.setdefault(point.name, []).append(point)
 
     def resolve_node(self, reference: str, config: dict[str, Any]) -> Any:
         if reference == "langchain:model":
@@ -37,13 +49,21 @@ class BindingRegistry:
             return _make_agent_node(config, self)
         if reference == "langgraph:tool-node":
             return _make_tool_node(config, self)
-        value = self._resolve(reference)
+        value = (
+            self._resolve_plugin(reference, "node", config)
+            if reference.startswith("plugin:")
+            else self._resolve(reference)
+        )
         if hasattr(value, "invoke") or callable(value):
             return value
         self._fail("BIND-007", reference, "node binding is neither callable nor Runnable")
 
     def resolve_route(self, reference: str) -> Callable[..., Any]:
-        value = self._resolve(reference)
+        value = (
+            self._resolve_plugin(reference, "route", {})
+            if reference.startswith("plugin:")
+            else self._resolve(reference)
+        )
         if callable(value):
             return cast(Callable[..., Any], value)
         self._fail("BIND-007", reference, "route binding is not callable")
@@ -55,6 +75,8 @@ class BindingRegistry:
     ) -> Any:
         if reference in {"memory", "in-memory"}:
             return _memory_runtime(kind)
+        if reference.startswith("plugin:"):
+            return self._resolve_plugin(reference, kind, {})
         return self._resolve(reference)
 
     def _resolve(self, reference: str) -> Any:
@@ -62,18 +84,72 @@ class BindingRegistry:
             name = reference.removeprefix("registry:")
             if name in self._bindings:
                 return self._bindings[name]
-            if name in self._plugins:
-                value = self._plugins[name].load()
+            if name in self._legacy_plugins:
+                value = self._legacy_plugins[name].load()
                 self._bindings[name] = value
                 return value
             self._fail("PLUGIN-003", reference, f"binding '{name}' is not registered")
+        if reference.startswith("plugin:"):
+            return self._resolve_plugin(reference, "tool", {})
         if reference.startswith("python:"):
             return self._import_python(reference.removeprefix("python:"))
         self._fail(
             "BIND-001",
             reference,
-            "unsupported binding scheme; use python:, registry:, or a built-in adapter",
+            "unsupported binding scheme; use python:, registry:, plugin:, or a built-in adapter",
         )
+
+    def _resolve_plugin(
+        self,
+        reference: str,
+        capability: PluginCapability,
+        config: dict[str, Any],
+    ) -> Any:
+        target = reference.removeprefix("plugin:")
+        plugin_name, separator, resource_name = target.partition("/")
+        if not separator or not plugin_name or not resource_name or "/" in resource_name:
+            self._fail("PLUGIN-002", reference, "expected plugin:<plugin-name>/<resource-name>")
+        plugin = self._load_plugin(plugin_name, reference)
+        if capability not in plugin.manifest.capabilities:
+            self._fail(
+                "PLUGIN-004",
+                reference,
+                f"plugin '{plugin_name}' does not declare the '{capability}' capability",
+            )
+        try:
+            return plugin.resolve(capability, resource_name, MappingProxyType(dict(config)))
+        except GraphGPTError:
+            raise
+        except Exception as exc:
+            self._fail(
+                "PLUGIN-006",
+                reference,
+                f"plugin '{plugin_name}' failed while resolving '{resource_name}' "
+                f"({type(exc).__name__})",
+            )
+
+    def _load_plugin(self, name: str, reference: str) -> GraphGPTPlugin:
+        if name in self._loaded_plugins:
+            return self._loaded_plugins[name]
+        points = self._plugin_points.get(name, [])
+        if not points:
+            self._fail("PLUGIN-003", reference, f"plugin '{name}' is not installed")
+        if len(points) > 1:
+            self._fail("PLUGIN-005", reference, f"multiple entry points register plugin '{name}'")
+        try:
+            candidate = points[0].load()
+        except Exception as exc:
+            self._fail(
+                "PLUGIN-006",
+                reference,
+                f"plugin '{name}' failed to load ({type(exc).__name__})",
+            )
+        diagnostics = validate_plugin(candidate, expected_name=name)
+        if diagnostics:
+            raise GraphGPTError(diagnostics)
+        plugin = cast(GraphGPTPlugin, candidate)
+        self._loaded_plugins[name] = plugin
+        return plugin
 
     def _import_python(self, target: str) -> Any:
         if "(" in target or ")" in target or ":" in target:
