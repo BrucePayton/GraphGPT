@@ -12,7 +12,7 @@ def test_loads_normalized_ir(tmp_path: Path) -> None:
     graph = inspect_workflow(path)
     assert graph.name == "test_graph"
     assert [node.id for node in graph.nodes] == ["step"]
-    assert graph.ir_version == "0.2"
+    assert graph.ir_version == "0.3"
     assert validate_workflow(path) == []
 
 
@@ -95,6 +95,27 @@ def test_reports_invalid_command_and_fan_out_contracts(tmp_path: Path) -> None:
         "GRAPHGPT-GRAPH-004",
         "GRAPHGPT-GRAPH-013",
         "GRAPHGPT-FANOUT-002",
+    }
+
+
+def test_reports_retry_and_cache_policy_contracts(tmp_path: Path) -> None:
+    path = tmp_path / "workflow.yaml"
+    path.write_text(
+        WORKFLOW.replace(
+            "step: {use: registry:step}",
+            "step:\n"
+            "      use: registry:step\n"
+            "      retry: {initialInterval: 2, maxInterval: 1}\n"
+            "      cache: {ttl: 60}",
+        ),
+        encoding="utf-8",
+    )
+
+    diagnostics = validate_workflow(path)
+
+    assert {item.code for item in diagnostics} >= {
+        "GRAPHGPT-RETRY-001",
+        "GRAPHGPT-CACHE-001",
     }
 
 

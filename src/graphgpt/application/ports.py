@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Protocol
+from typing import Any, Literal, Protocol
 
 from graphgpt.domain.ir import GraphIR
 from graphgpt.dsl.models import WorkflowDocument
@@ -20,5 +20,8 @@ class BindingResolver(Protocol):
 
     def resolve_route(self, reference: str) -> Any: ...
 
-    def resolve_runtime(self, reference: str) -> Any: ...
-
+    def resolve_runtime(
+        self,
+        reference: str,
+        kind: Literal["checkpointer", "store", "cache"] = "checkpointer",
+    ) -> Any: ...

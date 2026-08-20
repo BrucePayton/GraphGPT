@@ -1,6 +1,15 @@
 from __future__ import annotations
 
-from graphgpt.domain.ir import EdgeIR, GraphIR, NodeIR, RouteIR, RuntimeIR, StateFieldIR
+from graphgpt.domain.ir import (
+    CachePolicyIR,
+    EdgeIR,
+    GraphIR,
+    NodeIR,
+    RetryPolicyIR,
+    RouteIR,
+    RuntimeIR,
+    StateFieldIR,
+)
 from graphgpt.dsl.models import WorkflowDocument
 
 
@@ -24,6 +33,18 @@ def to_ir(document: WorkflowDocument) -> GraphIR:
             metadata=item.metadata,
             destinations=tuple(item.destinations),
             writes=tuple(item.writes),
+            retry=(
+                RetryPolicyIR(
+                    initial_interval=item.retry.initial_interval,
+                    backoff_factor=item.retry.backoff_factor,
+                    max_interval=item.retry.max_interval,
+                    max_attempts=item.retry.max_attempts,
+                    jitter=item.retry.jitter,
+                )
+                if item.retry
+                else None
+            ),
+            cache=CachePolicyIR(ttl=item.cache.ttl) if item.cache else None,
         )
         for name, item in sorted(spec.nodes.items())
     )
@@ -56,6 +77,7 @@ def to_ir(document: WorkflowDocument) -> GraphIR:
             interrupt_after=tuple(spec.runtime.interrupt_after),
             checkpointer=spec.runtime.checkpointer,
             store=spec.runtime.store,
+            cache=spec.runtime.cache,
         ),
         allowed_modules=tuple(spec.security.allowed_modules),
         metadata={"labels": document.metadata.labels},

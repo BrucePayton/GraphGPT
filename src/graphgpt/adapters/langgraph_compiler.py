@@ -14,6 +14,7 @@ class LangGraphCompiler:
 
     def compile(self, graph: GraphIR) -> Any:
         from langgraph.graph import END, START, StateGraph
+        from langgraph.types import CachePolicy, RetryPolicy
 
         state_schema = _make_state_schema(graph)
         builder = StateGraph(state_schema)
@@ -23,6 +24,18 @@ class LangGraphCompiler:
                 node.id,
                 self._resolver.resolve_node(node.use, node.config),
                 metadata=node.metadata or None,
+                retry_policy=(
+                    RetryPolicy(
+                        initial_interval=node.retry.initial_interval,
+                        backoff_factor=node.retry.backoff_factor,
+                        max_interval=node.retry.max_interval,
+                        max_attempts=node.retry.max_attempts,
+                        jitter=node.retry.jitter,
+                    )
+                    if node.retry
+                    else None
+                ),
+                cache_policy=CachePolicy(ttl=node.cache.ttl) if node.cache else None,
                 destinations=(
                     tuple(names.get(target, target) for target in node.destinations)
                     if node.destinations
@@ -44,17 +57,23 @@ class LangGraphCompiler:
                     cast(dict[Hashable, str], path_map),
                 )
         checkpointer = (
-            self._resolver.resolve_runtime(graph.runtime.checkpointer)
+            self._resolver.resolve_runtime(graph.runtime.checkpointer, "checkpointer")
             if graph.runtime.checkpointer and graph.runtime.checkpointer != "server-managed"
             else None
         )
         store = (
-            self._resolver.resolve_runtime(graph.runtime.store)
+            self._resolver.resolve_runtime(graph.runtime.store, "store")
             if graph.runtime.store and graph.runtime.store != "server-managed"
+            else None
+        )
+        cache = (
+            self._resolver.resolve_runtime(graph.runtime.cache, "cache")
+            if graph.runtime.cache and graph.runtime.cache != "server-managed"
             else None
         )
         return builder.compile(
             checkpointer=checkpointer,
+            cache=cache,
             store=store,
             interrupt_before=list(graph.runtime.interrupt_before),
             interrupt_after=list(graph.runtime.interrupt_after),

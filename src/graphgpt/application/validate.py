@@ -22,6 +22,14 @@ def validate_ir(graph: GraphIR) -> list[Diagnostic]:
 
     for node_ir in graph.nodes:
         node_path = f"spec.nodes.{node_ir.id}"
+        if node_ir.retry and node_ir.retry.max_interval < node_ir.retry.initial_interval:
+            diagnostics.append(
+                _error(
+                    "RETRY-001",
+                    node_path + ".retry.maxInterval",
+                    "maxInterval must be greater than or equal to initialInterval",
+                )
+            )
         if node_ir.id in {START, END}:
             diagnostics.append(
                 _error(
@@ -164,6 +172,16 @@ def validate_ir(graph: GraphIR) -> list[Diagnostic]:
     for node_id in sorted(referenced_policies - nodes):
         diagnostics.append(
             _error("GRAPH-009", "spec.runtime", f"runtime references unknown node '{node_id}'")
+        )
+
+    cached_nodes = [node.id for node in graph.nodes if node.cache]
+    if cached_nodes and not graph.runtime.cache:
+        diagnostics.append(
+            _error(
+                "CACHE-001",
+                "spec.runtime.cache",
+                f"cached nodes require a runtime cache backend: {cached_nodes}",
+            )
         )
 
     reachable = _reachable(adjacency, START)

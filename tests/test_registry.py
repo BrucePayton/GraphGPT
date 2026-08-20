@@ -126,8 +126,13 @@ def test_builds_model_agent_tool_node_and_memory_runtimes(
     )
     assert resolved_tool_node.tools == [tool]
     assert tool_node_calls == [[tool]]
-    assert registry.resolve_runtime("memory").__class__.__name__ == "InMemorySaver"
-    assert registry.resolve_runtime("in-memory").__class__.__name__ == "InMemoryStore"
+    assert registry.resolve_runtime("memory", "checkpointer").__class__.__name__ == (
+        "InMemorySaver"
+    )
+    assert registry.resolve_runtime("memory", "store").__class__.__name__ == "InMemoryStore"
+    assert registry.resolve_runtime("in-memory", "cache").__class__.__name__ == (
+        "InMemoryCache"
+    )
 
 
 @pytest.mark.parametrize("reference", ["langchain:model", "langchain:agent"])
