@@ -16,6 +16,7 @@ from graphgpt.api import compile_workflow, inspect_workflow, validate_workflow
 from graphgpt.domain.diagnostics import GraphGPTError, Severity
 from graphgpt.dsl.models import WorkflowDocument
 from graphgpt.observability import callback_for
+from graphgpt.plugin import PLUGIN_API_VERSION
 from graphgpt.project import TEMPLATES, initialize_project, to_mermaid
 
 app = typer.Typer(help="GraphGPT: compile versioned YAML workflows to native LangGraph.")
@@ -214,6 +215,7 @@ def doctor() -> None:
     """Report runtime, integrations, and CLI compatibility."""
     typer.echo(f"GraphGPT {__version__}")
     typer.echo(f"Python {sys.version.split()[0]}")
+    typer.echo(f"plugin API: {PLUGIN_API_VERSION}")
     for package in ("langgraph", "langchain", "langsmith", "langfuse"):
         try:
             version = importlib.metadata.version(package)
