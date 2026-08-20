@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from importlib import import_module
 from importlib.metadata import entry_points
 from pathlib import Path
-from typing import Any, NoReturn, cast
+from typing import Any, Literal, NoReturn, cast
 
 from graphgpt.domain.diagnostics import Diagnostic, GraphGPTError, Severity
 
@@ -48,9 +48,13 @@ class BindingRegistry:
             return cast(Callable[..., Any], value)
         self._fail("BIND-007", reference, "route binding is not callable")
 
-    def resolve_runtime(self, reference: str) -> Any:
+    def resolve_runtime(
+        self,
+        reference: str,
+        kind: Literal["checkpointer", "store", "cache"] = "checkpointer",
+    ) -> Any:
         if reference in {"memory", "in-memory"}:
-            return _memory_runtime(reference)
+            return _memory_runtime(kind)
         return self._resolve(reference)
 
     def _resolve(self, reference: str) -> Any:
@@ -161,11 +165,15 @@ def _make_tool_node(config: dict[str, Any], registry: BindingRegistry) -> Any:
     return ToolNode(tools)
 
 
-def _memory_runtime(reference: str) -> Any:
-    if reference == "memory":
+def _memory_runtime(kind: Literal["checkpointer", "store", "cache"]) -> Any:
+    if kind == "checkpointer":
         from langgraph.checkpoint.memory import InMemorySaver
 
         return InMemorySaver()
-    from langgraph.store.memory import InMemoryStore
+    if kind == "store":
+        from langgraph.store.memory import InMemoryStore
 
-    return InMemoryStore()
+        return InMemoryStore()
+    from langgraph.cache.memory import InMemoryCache
+
+    return InMemoryCache()

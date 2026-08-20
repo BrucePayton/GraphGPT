@@ -28,12 +28,26 @@ class StateModel(StrictModel):
     fields: dict[str, StateFieldModel] = Field(default_factory=dict)
 
 
+class RetryPolicyModel(StrictModel):
+    initial_interval: float = Field(default=0.5, gt=0, alias="initialInterval")
+    backoff_factor: float = Field(default=2.0, ge=1, alias="backoffFactor")
+    max_interval: float = Field(default=128.0, gt=0, alias="maxInterval")
+    max_attempts: int = Field(default=3, ge=1, alias="maxAttempts")
+    jitter: bool = True
+
+
+class CachePolicyModel(StrictModel):
+    ttl: int | None = Field(default=None, gt=0)
+
+
 class NodeModel(StrictModel):
     use: str = Field(min_length=1)
     with_: dict[str, Any] = Field(default_factory=dict, alias="with")
     metadata: dict[str, Any] = Field(default_factory=dict)
     destinations: list[str] = Field(default_factory=list)
     writes: list[str] = Field(default_factory=list)
+    retry: RetryPolicyModel | None = None
+    cache: CachePolicyModel | None = None
 
 
 class RouteModel(StrictModel):
@@ -60,6 +74,7 @@ class RuntimeModel(StrictModel):
     interrupt_after: list[str] = Field(default_factory=list, alias="interruptAfter")
     checkpointer: str | None = None
     store: str | None = None
+    cache: str | None = None
 
 
 class SecurityModel(StrictModel):

@@ -114,6 +114,45 @@ def test_static_interrupt_before_resumes_with_none_input(tmp_path: Path) -> None
     assert calls == ["step"]
 
 
+def test_node_retry_policy_retries_transient_failure(tmp_path: Path) -> None:
+    path = tmp_path / "workflow.yaml"
+    path.write_text(RETRY_WORKFLOW, encoding="utf-8")
+    calls: list[int] = []
+
+    def unstable(state: dict[str, int]) -> dict[str, int]:
+        calls.append(state["value"])
+        if len(calls) < 3:
+            raise ConnectionError("temporary")
+        return {"value": state["value"] + 1}
+
+    graph = compile_workflow(
+        path,
+        registry=BindingRegistry({"unstable": unstable}, discover_plugins=False),
+    )
+
+    assert graph.invoke({"value": 1})["value"] == 2
+    assert calls == [1, 1, 1]
+
+
+def test_node_cache_policy_reuses_result_for_same_input(tmp_path: Path) -> None:
+    path = tmp_path / "workflow.yaml"
+    path.write_text(CACHE_WORKFLOW, encoding="utf-8")
+    calls: list[int] = []
+
+    def expensive(state: dict[str, int]) -> dict[str, int]:
+        calls.append(state["value"])
+        return {"result": state["value"] * 2}
+
+    graph = compile_workflow(
+        path,
+        registry=BindingRegistry({"expensive": expensive}, discover_plugins=False),
+    )
+
+    assert graph.invoke({"value": 3})["result"] == 6
+    assert graph.invoke({"value": 3})["result"] == 6
+    assert calls == [3]
+
+
 WORKFLOW = """\
 apiVersion: graphgpt.dev/v1alpha1
 kind: Workflow
@@ -219,4 +258,48 @@ spec:
   runtime:
     interruptBefore: [step]
     checkpointer: memory
+"""
+
+RETRY_WORKFLOW = """\
+apiVersion: graphgpt.dev/v1alpha1
+kind: Workflow
+metadata:
+  name: retry_policy
+spec:
+  state:
+    fields:
+      value: {type: integer, required: true}
+  nodes:
+    unstable:
+      use: registry:unstable
+      retry:
+        initialInterval: 0.001
+        backoffFactor: 1
+        maxInterval: 0.001
+        maxAttempts: 3
+        jitter: false
+  edges:
+    - {from: $start, to: unstable}
+    - {from: unstable, to: $end}
+"""
+
+CACHE_WORKFLOW = """\
+apiVersion: graphgpt.dev/v1alpha1
+kind: Workflow
+metadata:
+  name: cache_policy
+spec:
+  state:
+    fields:
+      value: {type: integer, required: true}
+      result: {type: integer}
+  nodes:
+    expensive:
+      use: registry:expensive
+      cache: {ttl: 60}
+  edges:
+    - {from: $start, to: expensive}
+    - {from: expensive, to: $end}
+  runtime:
+    cache: memory
 """

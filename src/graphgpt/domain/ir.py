@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from typing import Any, Literal
 
-IR_VERSION = "0.2"
+IR_VERSION = "0.3"
 BUILTIN_STATE_TYPES = frozenset(
     {
         "any",
@@ -33,6 +33,20 @@ class StateFieldIR:
 
 
 @dataclass(frozen=True, slots=True)
+class RetryPolicyIR:
+    initial_interval: float = 0.5
+    backoff_factor: float = 2.0
+    max_interval: float = 128.0
+    max_attempts: int = 3
+    jitter: bool = True
+
+
+@dataclass(frozen=True, slots=True)
+class CachePolicyIR:
+    ttl: int | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class NodeIR:
     id: str
     use: str
@@ -40,6 +54,8 @@ class NodeIR:
     metadata: dict[str, Any] = field(default_factory=dict)
     destinations: tuple[str, ...] = ()
     writes: tuple[str, ...] = ()
+    retry: RetryPolicyIR | None = None
+    cache: CachePolicyIR | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -63,6 +79,7 @@ class RuntimeIR:
     interrupt_after: tuple[str, ...] = ()
     checkpointer: str | None = None
     store: str | None = None
+    cache: str | None = None
 
 
 @dataclass(frozen=True, slots=True)

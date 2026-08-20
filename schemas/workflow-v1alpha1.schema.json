@@ -1,5 +1,25 @@
 {
   "$defs": {
+    "CachePolicyModel": {
+      "additionalProperties": false,
+      "properties": {
+        "ttl": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ttl"
+        }
+      },
+      "title": "CachePolicyModel",
+      "type": "object"
+    },
     "EdgeModel": {
       "additionalProperties": false,
       "properties": {
@@ -63,6 +83,17 @@
     "NodeModel": {
       "additionalProperties": false,
       "properties": {
+        "cache": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CachePolicyModel"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "destinations": {
           "items": {
             "type": "string"
@@ -74,6 +105,17 @@
           "additionalProperties": true,
           "title": "Metadata",
           "type": "object"
+        },
+        "retry": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RetryPolicyModel"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         },
         "use": {
           "minLength": 1,
@@ -97,6 +139,42 @@
         "use"
       ],
       "title": "NodeModel",
+      "type": "object"
+    },
+    "RetryPolicyModel": {
+      "additionalProperties": false,
+      "properties": {
+        "backoffFactor": {
+          "default": 2.0,
+          "minimum": 1,
+          "title": "Backofffactor",
+          "type": "number"
+        },
+        "initialInterval": {
+          "default": 0.5,
+          "exclusiveMinimum": 0,
+          "title": "Initialinterval",
+          "type": "number"
+        },
+        "jitter": {
+          "default": true,
+          "title": "Jitter",
+          "type": "boolean"
+        },
+        "maxAttempts": {
+          "default": 3,
+          "minimum": 1,
+          "title": "Maxattempts",
+          "type": "integer"
+        },
+        "maxInterval": {
+          "default": 128.0,
+          "exclusiveMinimum": 0,
+          "title": "Maxinterval",
+          "type": "number"
+        }
+      },
+      "title": "RetryPolicyModel",
       "type": "object"
     },
     "RouteModel": {
@@ -142,6 +220,18 @@
     "RuntimeModel": {
       "additionalProperties": false,
       "properties": {
+        "cache": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cache"
+        },
         "checkpointer": {
           "anyOf": [
             {

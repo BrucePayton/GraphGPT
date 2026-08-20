@@ -55,7 +55,7 @@ def initialize_project(template: str, destination: Path) -> list[Path]:
         f'name = "graphgpt-{template}"\n'
         'version = "0.1.0"\n'
         'requires-python = ">=3.11"\n'
-        'dependencies = ["graphgpt-builder>=0.2,<0.3", "langgraph>=1.0,<2.0"]\n',
+        'dependencies = ["graphgpt-builder>=0.3,<0.4", "langgraph>=1.0,<2.0"]\n',
         encoding="utf-8",
     )
     created.append(package_config)
