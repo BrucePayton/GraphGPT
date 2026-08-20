@@ -9,6 +9,7 @@ from graphgpt.domain.ir import (
     RouteIR,
     RuntimeIR,
     StateFieldIR,
+    SubgraphIR,
 )
 from graphgpt.dsl.models import WorkflowDocument
 
@@ -29,6 +30,16 @@ def to_ir(document: WorkflowDocument) -> GraphIR:
         NodeIR(
             id=name,
             use=item.use,
+            subgraph=(
+                SubgraphIR(
+                    path=item.subgraph.path,
+                    input_map=item.subgraph.input_map,
+                    output_map=item.subgraph.output_map,
+                    persistence=item.subgraph.persistence,
+                )
+                if item.subgraph
+                else None
+            ),
             config=item.with_,
             metadata=item.metadata,
             destinations=tuple(item.destinations),

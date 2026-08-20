@@ -12,7 +12,7 @@ def test_loads_normalized_ir(tmp_path: Path) -> None:
     graph = inspect_workflow(path)
     assert graph.name == "test_graph"
     assert [node.id for node in graph.nodes] == ["step"]
-    assert graph.ir_version == "0.3"
+    assert graph.ir_version == "0.4"
     assert validate_workflow(path) == []
 
 
@@ -32,6 +32,21 @@ def test_rejects_unknown_schema_fields_with_location(tmp_path: Path) -> None:
     diagnostic = raised.value.diagnostics[0]
     assert diagnostic.code == "GRAPHGPT-SCHEMA-001"
     assert diagnostic.location is not None
+
+
+@pytest.mark.parametrize(
+    "node",
+    [
+        "step: {}",
+        "step: {use: registry:step, subgraph: {path: child.yaml}}",
+    ],
+)
+def test_node_requires_exactly_one_action(tmp_path: Path, node: str) -> None:
+    path = tmp_path / "workflow.yaml"
+    path.write_text(WORKFLOW.replace("step: {use: registry:step}", node), encoding="utf-8")
+
+    with pytest.raises(GraphGPTError, match="exactly one of 'use' or 'subgraph'"):
+        inspect_workflow(path)
 
 
 def test_reports_missing_workflow_as_structured_diagnostic(tmp_path: Path) -> None:

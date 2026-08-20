@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from typing import Any, Literal
 
-IR_VERSION = "0.3"
+IR_VERSION = "0.4"
 BUILTIN_STATE_TYPES = frozenset(
     {
         "any",
@@ -47,9 +47,18 @@ class CachePolicyIR:
 
 
 @dataclass(frozen=True, slots=True)
+class SubgraphIR:
+    path: str
+    input_map: dict[str, str] = field(default_factory=dict)
+    output_map: dict[str, str] = field(default_factory=dict)
+    persistence: Literal["per-invocation", "per-thread", "stateless"] = "per-invocation"
+
+
+@dataclass(frozen=True, slots=True)
 class NodeIR:
     id: str
-    use: str
+    use: str | None = None
+    subgraph: SubgraphIR | None = None
     config: dict[str, Any] = field(default_factory=dict)
     metadata: dict[str, Any] = field(default_factory=dict)
     destinations: tuple[str, ...] = ()

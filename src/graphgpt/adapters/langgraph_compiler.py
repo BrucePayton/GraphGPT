@@ -7,22 +7,37 @@ from typing import Annotated, Any, NotRequired, Required, TypedDict, cast
 from graphgpt.application.ports import BindingResolver
 from graphgpt.domain.ir import GraphIR
 
+_DEFAULT_CHECKPOINTER = object()
+
 
 class LangGraphCompiler:
     def __init__(self, resolver: BindingResolver):
         self._resolver = resolver
 
-    def compile(self, graph: GraphIR) -> Any:
+    def compile(
+        self,
+        graph: GraphIR,
+        *,
+        node_actions: dict[str, Any] | None = None,
+        checkpointer_override: object | None = _DEFAULT_CHECKPOINTER,
+    ) -> Any:
         from langgraph.graph import END, START, StateGraph
         from langgraph.types import CachePolicy, RetryPolicy
 
         state_schema = _make_state_schema(graph)
         builder = StateGraph(state_schema)
         names = {"$start": START, "$end": END}
+        actions = node_actions or {}
         for node in graph.nodes:
+            if node.id in actions:
+                action = actions[node.id]
+            else:
+                if node.use is None:
+                    raise ValueError(f"subgraph node '{node.id}' was not resolved")
+                action = self._resolver.resolve_node(node.use, node.config)
             builder.add_node(
                 node.id,
-                self._resolver.resolve_node(node.use, node.config),
+                action,
                 metadata=node.metadata or None,
                 retry_policy=(
                     RetryPolicy(
@@ -56,11 +71,14 @@ class LangGraphCompiler:
                     self._resolver.resolve_route(edge.route.use),
                     cast(dict[Hashable, str], path_map),
                 )
-        checkpointer = (
-            self._resolver.resolve_runtime(graph.runtime.checkpointer, "checkpointer")
-            if graph.runtime.checkpointer and graph.runtime.checkpointer != "server-managed"
-            else None
-        )
+        if checkpointer_override is _DEFAULT_CHECKPOINTER:
+            checkpointer = (
+                self._resolver.resolve_runtime(graph.runtime.checkpointer, "checkpointer")
+                if graph.runtime.checkpointer and graph.runtime.checkpointer != "server-managed"
+                else None
+            )
+        else:
+            checkpointer = checkpointer_override
         store = (
             self._resolver.resolve_runtime(graph.runtime.store, "store")
             if graph.runtime.store and graph.runtime.store != "server-managed"
