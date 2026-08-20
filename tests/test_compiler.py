@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from langgraph.types import Command, Send
+from langgraph.types import Command, Send, interrupt
 
 from graphgpt import BindingRegistry, compile_workflow, validate_workflow
 
@@ -59,6 +59,59 @@ def test_compiles_send_fan_out_with_aggregate_reducer(tmp_path: Path) -> None:
     assert validate_workflow(path) == []
     graph = compile_workflow(path, registry=registry)
     assert graph.invoke({"items": [], "results": []})["results"] == [2, 4, 6]
+
+
+def test_dynamic_interrupt_resumes_once_with_same_thread(tmp_path: Path) -> None:
+    path = tmp_path / "workflow.yaml"
+    path.write_text(INTERRUPT_WORKFLOW, encoding="utf-8")
+    decisions: list[bool] = []
+
+    def review(state: dict[str, object]) -> Command:
+        decision = bool(interrupt({"request": state["request"]}))
+        decisions.append(decision)
+        return Command(goto="accept" if decision else "reject")
+
+    registry = BindingRegistry(
+        {
+            "review": review,
+            "accept": lambda _: {"result": "accepted"},
+            "reject": lambda _: {"result": "rejected"},
+        },
+        discover_plugins=False,
+    )
+    graph = compile_workflow(path, registry=registry)
+    config = {"configurable": {"thread_id": "approval-1"}}
+
+    interrupted = graph.invoke({"request": "deploy"}, config=config)
+    assert interrupted["__interrupt__"][0].value == {"request": "deploy"}
+    assert decisions == []
+
+    resumed = graph.invoke(Command(resume=True), config=config)
+    assert resumed["result"] == "accepted"
+    assert decisions == [True]
+
+
+def test_static_interrupt_before_resumes_with_none_input(tmp_path: Path) -> None:
+    path = tmp_path / "workflow.yaml"
+    path.write_text(STATIC_INTERRUPT_WORKFLOW, encoding="utf-8")
+    calls: list[str] = []
+
+    def step(_: dict[str, object]) -> dict[str, str]:
+        calls.append("step")
+        return {"result": "done"}
+
+    graph = compile_workflow(
+        path,
+        registry=BindingRegistry({"step": step}, discover_plugins=False),
+    )
+    config = {"configurable": {"thread_id": "static-1"}}
+
+    graph.invoke({}, config=config)
+    assert calls == []
+
+    resumed = graph.invoke(None, config=config)
+    assert resumed["result"] == "done"
+    assert calls == ["step"]
 
 
 WORKFLOW = """\
@@ -123,4 +176,47 @@ spec:
         mode: fan-out
         targets: [worker]
     - {from: worker, to: $end}
+"""
+
+INTERRUPT_WORKFLOW = """\
+apiVersion: graphgpt.dev/v1alpha1
+kind: Workflow
+metadata:
+  name: interrupt_review
+spec:
+  state:
+    fields:
+      request: {type: string, required: true}
+      result: {type: string}
+  nodes:
+    review:
+      use: registry:review
+      destinations: [accept, reject]
+    accept: {use: registry:accept, writes: [result]}
+    reject: {use: registry:reject, writes: [result]}
+  edges:
+    - {from: $start, to: review}
+    - {from: accept, to: $end}
+    - {from: reject, to: $end}
+  runtime:
+    checkpointer: memory
+"""
+
+STATIC_INTERRUPT_WORKFLOW = """\
+apiVersion: graphgpt.dev/v1alpha1
+kind: Workflow
+metadata:
+  name: static_interrupt
+spec:
+  state:
+    fields:
+      result: {type: string}
+  nodes:
+    step: {use: registry:step, writes: [result]}
+  edges:
+    - {from: $start, to: step}
+    - {from: step, to: $end}
+  runtime:
+    interruptBefore: [step]
+    checkpointer: memory
 """

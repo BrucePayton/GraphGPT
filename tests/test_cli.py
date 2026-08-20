@@ -34,7 +34,7 @@ def test_cli_validate_inspect_schema_export_and_doctor(tmp_path: Path) -> None:
 
     doctor = runner.invoke(app, ["doctor"])
     assert doctor.exit_code == 0
-    assert "GraphGPT 0.2.0" in doctor.stdout
+    assert "GraphGPT 0.2.1" in doctor.stdout
 
 
 def test_cli_init_and_bad_input(tmp_path: Path) -> None:
@@ -87,7 +87,85 @@ def test_cli_run_stream_export_files_and_version(tmp_path: Path) -> None:
 
     version = runner.invoke(app, ["--version"])
     assert version.exit_code == 0
-    assert version.stdout.strip() == "0.2.0"
+    assert version.stdout.strip() == "0.2.1"
+
+
+def test_cli_passes_standard_runnable_config_to_nodes(tmp_path: Path) -> None:
+    workflow = tmp_path / "workflow.yaml"
+    nodes = tmp_path / "config_nodes.py"
+    workflow.write_text(CONFIG_WORKFLOW, encoding="utf-8")
+    nodes.write_text(
+        "def step(state, config):\n"
+        "    return {'result': {\n"
+        "        'tags': config.get('tags', []),\n"
+        "        'tenant': config.get('metadata', {}).get('tenant'),\n"
+        "        'thread_id': config.get('configurable', {}).get('thread_id'),\n"
+        "    }}\n",
+        encoding="utf-8",
+    )
+    config = json.dumps({"tags": ["cli"], "metadata": {"tenant": "acme"}})
+
+    invoked = runner.invoke(
+        app,
+        [
+            "run",
+            str(workflow),
+            "--config",
+            config,
+            "--thread-id",
+            "thread-7",
+        ],
+    )
+
+    assert invoked.exit_code == 0
+    assert json.loads(invoked.stdout) == {
+        "result": {"tags": ["cli"], "tenant": "acme", "thread_id": "thread-7"}
+    }
+
+
+def test_cli_builds_resume_command_with_thread_config(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from langgraph.types import Command
+
+    captured: dict[str, object] = {}
+
+    class Graph:
+        def invoke(self, payload: object, *, config: object) -> dict[str, bool]:
+            captured["payload"] = payload
+            captured["config"] = config
+            return {"resumed": True}
+
+    monkeypatch.setattr("graphgpt.cli.compile_workflow", lambda _: Graph())
+    result = runner.invoke(
+        app,
+        [
+            "run",
+            "workflow.yaml",
+            "--resume",
+            '{"approved": true}',
+            "--thread-id",
+            "approval-1",
+            "--config",
+            '{"tags": ["hitl"]}',
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert isinstance(captured["payload"], Command)
+    assert captured["payload"].resume == {"approved": True}
+    assert captured["config"] == {
+        "tags": ["hitl"],
+        "configurable": {"thread_id": "approval-1"},
+    }
+
+    continued = runner.invoke(
+        app,
+        ["run", "workflow.yaml", "--continue", "--thread-id", "static-1"],
+    )
+    assert continued.exit_code == 0
+    assert captured["payload"] is None
+    assert captured["config"] == {"configurable": {"thread_id": "static-1"}}
 
 
 @pytest.mark.parametrize(
@@ -95,6 +173,9 @@ def test_cli_run_stream_export_files_and_version(tmp_path: Path) -> None:
     [
         (["run", "workflow.yaml", "--input", "{"], "Expecting"),
         (["run", "workflow.yaml", "--trace", "invalid"], "trace must be"),
+        (["run", "workflow.yaml", "--config", "[]"], "config must be a JSON object"),
+        (["run", "workflow.yaml", "--resume", "true"], "--resume requires"),
+        (["run", "workflow.yaml", "--continue"], "--continue requires"),
         (["export", "workflow.yaml", "--format", "dot"], "format must be"),
     ],
 )
@@ -194,6 +275,24 @@ spec:
     allowedModules: [nodes]
   nodes:
     step: {use: python:nodes.step}
+  edges:
+    - {from: $start, to: step}
+    - {from: step, to: $end}
+"""
+
+CONFIG_WORKFLOW = """\
+apiVersion: graphgpt.dev/v1alpha1
+kind: Workflow
+metadata:
+  name: config_test
+spec:
+  state:
+    fields:
+      result: {type: object}
+  security:
+    allowedModules: [config_nodes]
+  nodes:
+    step: {use: python:config_nodes.step}
   edges:
     - {from: $start, to: step}
     - {from: step, to: $end}
