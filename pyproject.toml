@@ -45,6 +45,7 @@ exclude = ["**/__pycache__/**", "**/*.pyc", "**/*.pyo"]
 include = [
   "/src",
   "/tests",
+  "/examples",
   "/docs",
   "/schemas",
   "/README.md",

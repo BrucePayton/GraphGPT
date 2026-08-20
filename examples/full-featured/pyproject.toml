@@ -1,0 +1,24 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "graphgpt-full-featured-example"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = ["graphgpt-builder>=0.6,<0.7"]
+
+[project.optional-dependencies]
+dev = ["langgraph-cli[inmem]>=0.4,<1.0"]
+
+[project.scripts]
+graphgpt-full-example = "full_featured.verify:main"
+
+[project.entry-points."graphgpt.plugins"]
+demo = "full_featured.plugin:plugin"
+
+[tool.hatch.build.targets.wheel]
+packages = ["full_featured"]
+
+[tool.uv.sources]
+graphgpt-builder = { path = "../..", editable = true }
