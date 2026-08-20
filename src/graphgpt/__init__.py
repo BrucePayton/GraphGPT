@@ -10,4 +10,4 @@ __all__ = [
     "load_workflow",
     "validate_workflow",
 ]
-__version__ = "0.2.0"
+__version__ = "0.2.1"

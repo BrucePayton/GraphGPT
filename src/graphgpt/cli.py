@@ -73,31 +73,74 @@ def inspect_command(path: Path) -> None:
 @app.command()
 def run(
     path: Path,
-    input: Annotated[str, typer.Option("--input", "-i")] = "{}",
+    input: Annotated[str | None, typer.Option("--input", "-i")] = None,
     stream: Annotated[bool, typer.Option("--stream")] = False,
     trace: Annotated[str, typer.Option("--trace")] = "none",
     thread_id: Annotated[str | None, typer.Option("--thread-id")] = None,
+    config: Annotated[
+        str,
+        typer.Option("--config", help="RunnableConfig JSON with tags, metadata, or configurable."),
+    ] = "{}",
+    resume: Annotated[
+        str | None,
+        typer.Option("--resume", help="JSON response for a dynamic interrupt()."),
+    ] = None,
+    continue_thread: Annotated[
+        bool,
+        typer.Option("--continue", help="Resume a static interrupt with None input."),
+    ] = False,
 ) -> None:
     """Compile and invoke a workflow locally."""
     if trace not in {"none", "langsmith", "langfuse"}:
         raise typer.BadParameter("trace must be none, langsmith, or langfuse")
+    selected_inputs = sum((input is not None, resume is not None, continue_thread))
+    if selected_inputs > 1:
+        raise typer.BadParameter("--input, --resume, and --continue are mutually exclusive")
     try:
-        payload = json.loads(input)
+        invocation_config = _json_object(config, "config")
+        configurable = invocation_config.setdefault("configurable", {})
+        if not isinstance(configurable, dict):
+            raise ValueError("config.configurable must be a JSON object")
+        if thread_id:
+            configurable["thread_id"] = thread_id
+        if not configurable:
+            invocation_config.pop("configurable")
+
+        if resume is not None:
+            from langgraph.types import Command
+
+            resume_value = json.loads(resume)
+            if resume_value is None:
+                raise ValueError("resume value cannot be null")
+            if not configurable.get("thread_id"):
+                raise ValueError("--resume requires --thread-id or config.configurable.thread_id")
+            payload: Any = Command(resume=resume_value)
+        elif continue_thread:
+            if not configurable.get("thread_id"):
+                raise ValueError("--continue requires --thread-id or config.configurable.thread_id")
+            payload = None
+        else:
+            payload = json.loads(input or "{}")
         graph = compile_workflow(path)
         callback = callback_for(trace)  # type: ignore[arg-type]
-        config: dict[str, Any] = {}
         if callback:
-            config["callbacks"] = [callback]
-        if thread_id:
-            config.setdefault("configurable", {})["thread_id"] = thread_id
+            invocation_config["callbacks"] = [callback]
         if stream:
-            for event in graph.stream(payload, config=config or None):
+            for event in graph.stream(payload, config=invocation_config or None):
                 typer.echo(json.dumps(event, default=str, sort_keys=True))
         else:
-            typer.echo(json.dumps(graph.invoke(payload, config=config or None), default=str))
+            result = graph.invoke(payload, config=invocation_config or None)
+            typer.echo(json.dumps(result, default=str))
     except (GraphGPTError, json.JSONDecodeError, RuntimeError, ValueError) as exc:
         typer.echo(str(exc), err=True)
         raise typer.Exit(1) from exc
+
+
+def _json_object(value: str, name: str) -> dict[str, Any]:
+    parsed = json.loads(value)
+    if not isinstance(parsed, dict):
+        raise ValueError(f"{name} must be a JSON object")
+    return parsed
 
 
 @app.command()
