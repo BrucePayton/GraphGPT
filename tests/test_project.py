@@ -1,7 +1,10 @@
 import json
+import tomllib
 from pathlib import Path
 
-from graphgpt.project import _template_files, initialize_project
+import pytest
+
+from graphgpt.project import _template_files, initialize_plugin, initialize_project
 
 
 def test_init_generates_langgraph_cli_project(tmp_path: Path) -> None:
@@ -16,7 +19,7 @@ def test_init_generates_langgraph_cli_project(tmp_path: Path) -> None:
     }
     assert "compile_workflow" in (output / "graph.py").read_text(encoding="utf-8")
     package_config = (output / "pyproject.toml").read_text(encoding="utf-8")
-    assert 'graphgpt-builder>=0.7,<0.8' in package_config
+    assert 'graphgpt-builder>=0.8,<0.9' in package_config
 
 
 def test_template_files_ignore_runtime_artifacts(tmp_path: Path) -> None:
@@ -44,3 +47,37 @@ def test_init_preflights_all_outputs_before_writing(tmp_path: Path) -> None:
 
     assert graph_module.read_text(encoding="utf-8") == "# keep me\n"
     assert sorted(path.name for path in output.iterdir()) == ["graph.py"]
+
+
+def test_plugin_init_generates_publishable_entry_point_and_working_contract(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output = tmp_path / "community-plugin"
+
+    created = initialize_plugin("community-tools", output)
+
+    assert len(created) == 8
+    package_config = tomllib.loads((output / "pyproject.toml").read_text(encoding="utf-8"))
+    assert package_config["project"]["name"] == "graphgpt-community-tools"
+    assert package_config["project"]["entry-points"]["graphgpt.plugins"] == {
+        "community-tools": "graphgpt_community_tools.plugin:plugin"
+    }
+    assert "graphgpt-builder>=0.8,<0.9" in package_config["project"]["dependencies"]
+    assert (output / ".github/workflows/ci.yml").is_file()
+
+    monkeypatch.syspath_prepend(str(output / "src"))
+    from graphgpt_community_tools.plugin import plugin
+
+    assert plugin.manifest.name == "community-tools"
+    node = plugin.resolve("node", "echo", {"prefix": "hello "})
+    assert node({"input": "ecosystem"}) == {"result": "hello ecosystem"}
+
+
+def test_plugin_init_rejects_invalid_names_and_existing_outputs(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="plugin name"):
+        initialize_plugin("Invalid Plugin", tmp_path / "invalid")
+
+    output = tmp_path / "existing"
+    initialize_plugin("community", output)
+    with pytest.raises(FileExistsError, match="refusing to overwrite"):
+        initialize_plugin("community", output)

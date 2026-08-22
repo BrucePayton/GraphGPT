@@ -1,0 +1,42 @@
+name: Feature or RFC
+description: Propose an improvement, integration, or public contract change
+title: "[Proposal]: "
+labels: [enhancement, triage]
+body:
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Area
+      options:
+        - DSL or IR
+        - Compiler/runtime
+        - Plugin ecosystem
+        - CLI/developer experience
+        - LangChain/LangGraph integration
+        - Documentation/community
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: Describe the user need without assuming one implementation.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution and alternatives
+    validations:
+      required: true
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility and migration
+      description: Note effects on DSL, IR, Python API, CLI, plugins, or security.
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      options:
+        - label: I am willing to help implement or test this proposal.

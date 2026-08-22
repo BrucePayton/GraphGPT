@@ -8,6 +8,7 @@ import pytest
 from typer.testing import CliRunner
 
 from graphgpt.cli import app
+from graphgpt.plugin import PluginInspection, PluginManifest
 
 runner = CliRunner()
 
@@ -34,7 +35,7 @@ def test_cli_validate_inspect_schema_export_and_doctor(tmp_path: Path) -> None:
 
     doctor = runner.invoke(app, ["doctor"])
     assert doctor.exit_code == 0
-    assert "GraphGPT 0.7.0" in doctor.stdout
+    assert "GraphGPT 0.8.0" in doctor.stdout
     assert "plugin API: graphgpt.dev/plugin/v1alpha1" in doctor.stdout
 
 
@@ -88,7 +89,7 @@ def test_cli_run_stream_export_files_and_version(tmp_path: Path) -> None:
 
     version = runner.invoke(app, ["--version"])
     assert version.exit_code == 0
-    assert version.stdout.strip() == "0.7.0"
+    assert version.stdout.strip() == "0.8.0"
 
 
 def test_cli_passes_standard_runnable_config_to_nodes(tmp_path: Path) -> None:
@@ -200,6 +201,50 @@ def test_cli_init_rejects_unknown_template_and_existing_files(tmp_path: Path) ->
     assert first.exit_code == 0
     assert second.exit_code == 1
     assert "refusing to overwrite" in second.output
+
+
+def test_cli_lists_installed_plugins_in_human_and_json_formats(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    inspection = PluginInspection(
+        name="community",
+        entry_point="community.plugin:plugin",
+        distribution="graphgpt-community",
+        manifest=PluginManifest(
+            name="community",
+            version="1.0.0",
+            capabilities=frozenset({"node", "tool"}),
+        ),
+    )
+    monkeypatch.setattr("graphgpt.cli.inspect_installed_plugins", lambda: (inspection,))
+
+    human = runner.invoke(app, ["plugin", "list"])
+    rendered_json = runner.invoke(app, ["plugin", "list", "--output", "json"])
+
+    assert human.exit_code == 0
+    assert "OK community 1.0.0 [node,tool] (graphgpt-community)" in human.stdout
+    assert json.loads(rendered_json.stdout)[0]["manifest"]["api_version"] == (
+        "graphgpt.dev/plugin/v1alpha1"
+    )
+
+
+def test_cli_initializes_community_plugin_package(tmp_path: Path) -> None:
+    destination = tmp_path / "community-plugin"
+
+    initialized = runner.invoke(
+        app,
+        ["plugin", "init", str(destination), "--name", "community-tools"],
+    )
+    duplicate = runner.invoke(
+        app,
+        ["plugin", "init", str(destination), "--name", "community-tools"],
+    )
+
+    assert initialized.exit_code == 0
+    assert "Created plugin 'community-tools' with 8 files" in initialized.stdout
+    assert (destination / "src/graphgpt_community_tools/plugin.py").is_file()
+    assert duplicate.exit_code == 1
+    assert "refusing to overwrite" in duplicate.output
 
 
 def test_cli_dev_delegates_with_supported_config_flag(

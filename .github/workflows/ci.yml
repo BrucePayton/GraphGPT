@@ -32,3 +32,5 @@ jobs:
           "$RUNNER_TEMP/graphgpt-wheel-venv/bin/graphgpt" init "$RUNNER_TEMP/graphgpt-smoke" --template loop
           "$RUNNER_TEMP/graphgpt-wheel-venv/bin/graphgpt" validate "$RUNNER_TEMP/graphgpt-smoke/workflow.yaml"
           "$RUNNER_TEMP/graphgpt-wheel-venv/bin/graphgpt" run "$RUNNER_TEMP/graphgpt-smoke/workflow.yaml" --input '{"count": 0}'
+          "$RUNNER_TEMP/graphgpt-wheel-venv/bin/graphgpt" plugin init "$RUNNER_TEMP/graphgpt-plugin" --name ci-plugin
+          uv build --project "$RUNNER_TEMP/graphgpt-plugin"

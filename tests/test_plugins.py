@@ -4,7 +4,13 @@ from typing import Any
 
 import pytest
 
-from graphgpt import PLUGIN_API_VERSION, PluginManifest, compile_workflow, validate_plugin
+from graphgpt import (
+    PLUGIN_API_VERSION,
+    PluginManifest,
+    compile_workflow,
+    inspect_installed_plugins,
+    validate_plugin,
+)
 from graphgpt.domain.diagnostics import GraphGPTError
 from graphgpt.plugin import PluginCapability
 from graphgpt.registry import BindingRegistry
@@ -40,6 +46,8 @@ class ExamplePlugin:
 class EntryPoint:
     def __init__(self, name: str, value: object, loads: list[str]) -> None:
         self.name = name
+        self.value = f"example_plugins:{name}"
+        self.dist = None
         self._value = value
         self._loads = loads
 
@@ -198,3 +206,52 @@ def test_isolates_plugin_load_and_resolution_failures(monkeypatch: pytest.Monkey
     _discovery(monkeypatch, EntryPoint("example", BrokenPlugin(), []))
     with pytest.raises(GraphGPTError, match=r"failed while resolving 'step' \(ValueError\)"):
         BindingRegistry().resolve_node("plugin:example/step", {})
+
+
+def test_inspects_installed_plugins_as_stable_serializable_records(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    point = EntryPoint("example", ExamplePlugin(), [])
+    monkeypatch.setattr("graphgpt.plugin.entry_points", lambda *, group: [point])
+
+    inspections = inspect_installed_plugins()
+
+    assert len(inspections) == 1
+    assert inspections[0].healthy
+    assert inspections[0].to_dict() == {
+        "name": "example",
+        "entry_point": "example_plugins:example",
+        "distribution": None,
+        "healthy": True,
+        "manifest": {
+            "name": "example",
+            "version": "1.2.3",
+            "api_version": PLUGIN_API_VERSION,
+            "capabilities": ["cache", "node", "route", "tool"],
+        },
+        "diagnostics": [],
+    }
+
+
+def test_inspection_isolates_duplicate_and_broken_plugins(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class BrokenEntryPoint(EntryPoint):
+        def load(self) -> object:
+            raise ImportError("private details")
+
+    points = [
+        EntryPoint("duplicate", ExamplePlugin(), []),
+        EntryPoint("duplicate", ExamplePlugin(), []),
+        BrokenEntryPoint("broken", object(), []),
+    ]
+    monkeypatch.setattr("graphgpt.plugin.entry_points", lambda *, group: points)
+
+    inspections = inspect_installed_plugins()
+
+    assert [item.name for item in inspections] == ["broken", "duplicate"]
+    assert [item.diagnostics[0].code for item in inspections] == [
+        "GRAPHGPT-PLUGIN-006",
+        "GRAPHGPT-PLUGIN-005",
+    ]
+    assert "private details" not in str([item.to_dict() for item in inspections])

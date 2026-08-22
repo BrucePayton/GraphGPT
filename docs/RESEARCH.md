@@ -1,13 +1,14 @@
 # 相关项目调研与取舍
 
-调研日期：2026-08-05。星数会变化，仅用于判断社区采用度，不作为复制实现的依据。
+首次调研：2026-08-05；生态复核：2026-08-22。星数会变化，仅用于判断社区采用度，
+不作为复制实现的依据。
 
 | 项目 | 调研时信号 | 可借鉴点 | GraphGPT 的差异化取舍 |
 |---|---:|---|---|
-| [LangGraph](https://github.com/langchain-ai/langgraph) | 约 37.4k stars | 原生状态图、持久化、interrupt、stream | 只使用公共 API，不复制 runtime |
+| [LangGraph](https://github.com/langchain-ai/langgraph) | 约 40.2k stars | 原生状态图、持久化、interrupt、stream | 只使用公共 API，不复制 runtime |
 | [LangGraph Builder](https://github.com/langchain-ai/langgraph-builder) | 236 stars，已归档 | Canvas、条件边和循环的编辑体验 | v0.1 先稳定 IR/Schema，为未来 UI 提供边界 |
 | [langgraph-gen-py](https://github.com/langchain-ai/langgraph-gen-py) | 110 stars | YAML 到 Python/TS stub 的快速生成 | 运行时直接构图为主，避免生成代码成为事实 runtime |
-| [Yagra](https://github.com/shogo-hs/Yagra) | 活跃、265 commits | 注册表、TypedDict、Send、子图、模板、Golden Test | 增加版本化 IR、统一诊断和严格端口边界；避免 Litellm 等成为核心依赖 |
+| [Yagra](https://github.com/shogo-hs/Yagra) | 活跃、小规模社区 | 注册表、TypedDict、Send、子图、模板、Golden Test | 增加版本化 IR、统一诊断和严格端口边界；避免 Litellm 等成为核心依赖 |
 | [retrieval-agent-template](https://github.com/langchain-ai/retrieval-agent-template) | LangChain 官方模板 | `src/`、测试、`langgraph.json` 的可部署项目形态 | `graphgpt init` 直接生成同类标准结构 |
 
 LangGraph Builder 在 2026-02-24 被归档，因此 GraphGPT 不依赖其前端或生成器。Yagra 是当前
@@ -25,3 +26,19 @@ LangGraph Builder 在 2026-02-24 被归档，因此 GraphGPT 不依赖其前端�
 - [Langfuse integration](https://docs.langchain.com/oss/python/integrations/providers/langfuse)：
   在调用配置中传入 callback，不侵入节点与 IR。
 
+## 开源生态复核
+
+除图生成器外，还复核了成熟编排与 Agent 社区的仓库结构：
+
+| 项目 | 2026-08-22 社区信号 | 采用的生态做法 |
+|---|---:|---|
+| [Apache Airflow](https://github.com/apache/airflow) | 约 46.6k stars | provider 独立包、贡献治理、安全响应、结构化 Issue |
+| [CrewAI](https://github.com/crewAIInc/crewAI) | 约 57.5k stars | 快速模板入口、集成发现、面向插件作者的开发路径 |
+| [Prefect](https://github.com/PrefectHQ/prefect) | 约 23.7k stars | 清晰的兼容边界、扩展集合和贡献自动化 |
+| [Dagster](https://github.com/dagster-io/dagster) | 约 16.0k stars | 核心与 integration packages 分离、独立版本与测试 |
+| [Langfuse](https://github.com/langfuse/langfuse) | 约 33.6k stars | 集成目录、可观测性互操作和社区贡献入口 |
+
+GraphGPT v0.8 由此采用“核心保持精简、第三方插件独立发布”的模式：提供标准 entry point、
+插件包脚手架、安装态健康检查、候选生态目录和兼容性提交清单；不在核心包内直接收编 provider
+SDK。仓库同时补齐贡献、安全、治理、行为准则、Issue/PR 模板和依赖更新自动化，使社区扩展
+从代码协议形成可维护的发布闭环。

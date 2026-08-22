@@ -6,7 +6,9 @@ from graphgpt.plugin import (
     PLUGIN_ENTRY_POINT_GROUP,
     GraphGPTPlugin,
     PluginCapability,
+    PluginInspection,
     PluginManifest,
+    inspect_installed_plugins,
     validate_plugin,
 )
 from graphgpt.registry import BindingRegistry
@@ -17,11 +19,13 @@ __all__ = [
     "BindingRegistry",
     "GraphGPTPlugin",
     "PluginCapability",
+    "PluginInspection",
     "PluginManifest",
     "compile_workflow",
+    "inspect_installed_plugins",
     "inspect_workflow",
     "load_workflow",
     "validate_plugin",
     "validate_workflow",
 ]
-__version__ = "0.7.0"
+__version__ = "0.8.0"

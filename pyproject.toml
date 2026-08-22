@@ -4,12 +4,22 @@ build-backend = "hatchling.build"
 
 [project]
 name = "graphgpt-builder"
-version = "0.7.0"
+version = "0.8.0"
 description = "Declarative, extensible compiler from versioned YAML workflows to native LangGraph"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
 authors = [{ name = "GraphGPT contributors" }]
+keywords = ["langgraph", "langchain", "agents", "workflow", "yaml"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Typing :: Typed",
+]
 dependencies = [
   "langgraph>=1.0,<2.0",
   "pydantic>=2.10,<3.0",
@@ -33,6 +43,13 @@ dev = [
 [project.scripts]
 graphgpt = "graphgpt.cli:app"
 
+[project.urls]
+Homepage = "https://github.com/BrucePayton/GraphGPT"
+Documentation = "https://github.com/BrucePayton/GraphGPT/tree/main/docs"
+Repository = "https://github.com/BrucePayton/GraphGPT.git"
+Issues = "https://github.com/BrucePayton/GraphGPT/issues"
+Changelog = "https://github.com/BrucePayton/GraphGPT/blob/main/CHANGELOG.md"
+
 [project.entry-points."graphgpt.nodes"]
 
 [project.entry-points."graphgpt.plugins"]
@@ -49,7 +66,13 @@ include = [
   "/docs",
   "/schemas",
   "/README.md",
+  "/CHANGELOG.md",
+  "/CODE_OF_CONDUCT.md",
+  "/CONTRIBUTING.md",
+  "/ECOSYSTEM.md",
+  "/GOVERNANCE.md",
   "/LICENSE",
+  "/SECURITY.md",
   "/pyproject.toml",
   "/uv.lock",
 ]

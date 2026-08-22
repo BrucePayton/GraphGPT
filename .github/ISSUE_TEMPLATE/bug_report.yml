@@ -1,0 +1,51 @@
+name: Bug report
+description: Report a reproducible GraphGPT defect
+title: "[Bug]: "
+labels: [bug, triage]
+body:
+  - type: markdown
+    attributes:
+      value: Please remove secrets and private data from workflows and logs.
+  - type: input
+    id: version
+    attributes:
+      label: GraphGPT version
+      placeholder: 0.8.0
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Python, LangGraph, and operating system
+      placeholder: Python 3.13, LangGraph 1.2, Ubuntu 24.04
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Include a minimal YAML workflow and command or Python snippet.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Actual and expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics or logs
+      description: Prefer `graphgpt validate --output json`; redact credentials.
+      render: text
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues.
+          required: true
+        - label: This is not a private security report.
+          required: true
