@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from typing import Any, Literal
 
+from graphgpt.domain.diagnostics import SourceLocation
+
 IR_VERSION = "0.4"
 BUILTIN_STATE_TYPES = frozenset(
     {
@@ -103,6 +105,9 @@ class GraphIR:
     allowed_modules: tuple[str, ...] = ()
     metadata: dict[str, Any] = field(default_factory=dict)
     ir_version: str = IR_VERSION
+    source_map: dict[str, SourceLocation] = field(default_factory=dict, compare=False, repr=False)
 
     def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        document = asdict(self)
+        document.pop("source_map")
+        return document

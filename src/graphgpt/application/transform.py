@@ -92,4 +92,5 @@ def to_ir(document: WorkflowDocument) -> GraphIR:
         ),
         allowed_modules=tuple(spec.security.allowed_modules),
         metadata={"labels": document.metadata.labels},
+        source_map=document.source_map,
     )

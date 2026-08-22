@@ -45,4 +45,3 @@ class GraphGPTError(Exception):
     def __init__(self, diagnostics: list[Diagnostic]):
         self.diagnostics = diagnostics
         super().__init__("\n".join(item.render() for item in diagnostics))
-
