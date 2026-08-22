@@ -4,7 +4,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from graphgpt.application.validate import validate_ir
+from graphgpt.application.validate import locate_diagnostics, validate_ir
 from graphgpt.domain.diagnostics import Diagnostic, Severity
 from graphgpt.domain.ir import GraphIR
 
@@ -89,7 +89,7 @@ def load_graph_tree(
                     "per-thread subgraphs require a parent runtime checkpointer",
                 )
             )
-    return tree, diagnostics
+    return tree, locate_diagnostics(graph, diagnostics)
 
 
 def _state_contract(graph: GraphIR) -> dict[str, tuple[str, bool]]:

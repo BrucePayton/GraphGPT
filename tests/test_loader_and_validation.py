@@ -13,15 +13,37 @@ def test_loads_normalized_ir(tmp_path: Path) -> None:
     assert graph.name == "test_graph"
     assert [node.id for node in graph.nodes] == ["step"]
     assert graph.ir_version == "0.4"
+    assert "source_map" not in graph.to_dict()
     assert validate_workflow(path) == []
 
 
 def test_reports_unknown_edge_before_importing_code(tmp_path: Path) -> None:
     path = tmp_path / "workflow.yaml"
-    path.write_text(WORKFLOW.replace("to: step", "to: missing"), encoding="utf-8")
+    source = WORKFLOW.replace("to: step", "to: missing")
+    path.write_text(source, encoding="utf-8")
     diagnostics = validate_workflow(path)
-    assert any(item.code == "GRAPHGPT-GRAPH-004" for item in diagnostics)
+    error = next(item for item in diagnostics if item.code == "GRAPHGPT-GRAPH-004")
+    assert error.location is not None
+    assert error.location.file == str(path)
+    assert error.location.line == next(
+        index for index, line in enumerate(source.splitlines(), 1) if "to: missing" in line
+    )
     assert any(item.severity == Severity.WARNING for item in diagnostics)
+    assert all(item.location is not None for item in diagnostics)
+
+
+def test_source_map_does_not_change_normalized_ir(tmp_path: Path) -> None:
+    first = tmp_path / "first.yaml"
+    second = tmp_path / "nested" / "second.yaml"
+    second.parent.mkdir()
+    first.write_text(WORKFLOW, encoding="utf-8")
+    second.write_text(WORKFLOW, encoding="utf-8")
+
+    first_graph = inspect_workflow(first)
+    second_graph = inspect_workflow(second)
+
+    assert first_graph.to_dict() == second_graph.to_dict()
+    assert str(tmp_path) not in str(first_graph.to_dict())
 
 
 def test_rejects_unknown_schema_fields_with_location(tmp_path: Path) -> None:

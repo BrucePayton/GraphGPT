@@ -66,7 +66,9 @@ class SafeYamlWorkflowLoader:
         if root:
             _collect_locations(root, "$", str(path), locations)
         try:
-            return WorkflowDocument.model_validate(data)
+            document = WorkflowDocument.model_validate(data)
+            document._source_map = locations
+            return document
         except ValidationError as exc:
             diagnostics = []
             for error in exc.errors(include_url=False):

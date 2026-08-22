@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from collections import defaultdict, deque
+from dataclasses import replace
 
 from graphgpt.application.secrets import validate_secret_config
-from graphgpt.domain.diagnostics import Diagnostic, Severity
+from graphgpt.domain.diagnostics import Diagnostic, Severity, SourceLocation
 from graphgpt.domain.ir import BUILTIN_REDUCERS, BUILTIN_STATE_TYPES, GraphIR
 
 START = "$start"
@@ -201,7 +202,27 @@ def validate_ir(graph: GraphIR) -> list[Diagnostic]:
         diagnostics.append(
             _error("GRAPH-006", "spec.edges", "no reachable path terminates at $end")
         )
-    return diagnostics
+    return locate_diagnostics(graph, diagnostics)
+
+
+def locate_diagnostics(graph: GraphIR, diagnostics: list[Diagnostic]) -> list[Diagnostic]:
+    """Attach the nearest YAML source location without changing explicit locations."""
+    return [
+        item
+        if item.location is not None
+        else replace(item, location=_nearest_source_location(graph, item.path))
+        for item in diagnostics
+    ]
+
+
+def _nearest_source_location(graph: GraphIR, path: str) -> SourceLocation | None:
+    lookup = path if path.startswith("$") else f"$.{path}"
+    current = lookup
+    while current:
+        if location := graph.source_map.get(current):
+            return location
+        current = current.rsplit(".", 1)[0] if "." in current else ""
+    return graph.source_map.get("$")
 
 
 def _reachable(adjacency: dict[str, set[str]], source: str) -> set[str]:

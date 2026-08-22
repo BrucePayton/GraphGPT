@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, model_validator
+
+from graphgpt.domain.diagnostics import SourceLocation
 
 API_VERSION = "graphgpt.dev/v1alpha1"
 
@@ -104,7 +106,13 @@ class SpecModel(StrictModel):
 
 
 class WorkflowDocument(StrictModel):
+    _source_map: dict[str, SourceLocation] = PrivateAttr(default_factory=dict)
+
     api_version: Literal["graphgpt.dev/v1alpha1"] = Field(alias="apiVersion")
     kind: Literal["Workflow"]
     metadata: MetadataModel
     spec: SpecModel
+
+    @property
+    def source_map(self) -> dict[str, SourceLocation]:
+        return self._source_map

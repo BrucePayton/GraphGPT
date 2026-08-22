@@ -63,7 +63,8 @@ def test_validates_mapping_persistence_cycles_and_path_escape(tmp_path: Path) ->
     root.write_text(ROOT_INVALID, encoding="utf-8")
     child.write_text(CHILD_CYCLE, encoding="utf-8")
 
-    codes = {item.code for item in validate_workflow(root)}
+    diagnostics = validate_workflow(root)
+    codes = {item.code for item in diagnostics}
 
     assert codes >= {
         "GRAPHGPT-SUBGRAPH-002",
@@ -75,6 +76,12 @@ def test_validates_mapping_persistence_cycles_and_path_escape(tmp_path: Path) ->
         "GRAPHGPT-SUBGRAPH-009",
         "GRAPHGPT-SEC-002",
     }
+    cycle = next(item for item in diagnostics if item.code == "GRAPHGPT-SUBGRAPH-002")
+    mapping = next(item for item in diagnostics if item.code == "GRAPHGPT-SUBGRAPH-004")
+    assert cycle.location is not None
+    assert cycle.location.file == str(child)
+    assert mapping.location is not None
+    assert mapping.location.file == str(root)
 
 
 ROOT_SHARED = """\
