@@ -17,10 +17,12 @@ from graphgpt.application.secrets import redact_secrets
 from graphgpt.domain.diagnostics import GraphGPTError, Severity
 from graphgpt.dsl.models import WorkflowDocument
 from graphgpt.observability import callback_for
-from graphgpt.plugin import PLUGIN_API_VERSION
-from graphgpt.project import TEMPLATES, initialize_project, to_mermaid
+from graphgpt.plugin import PLUGIN_API_VERSION, inspect_installed_plugins
+from graphgpt.project import TEMPLATES, initialize_plugin, initialize_project, to_mermaid
 
 app = typer.Typer(help="GraphGPT: compile versioned YAML workflows to native LangGraph.")
+plugin_app = typer.Typer(help="Create, inspect, and validate GraphGPT plugins.")
+app.add_typer(plugin_app, name="plugin")
 
 
 class OutputFormat(StrEnum):
@@ -159,6 +161,43 @@ def init(
         typer.echo(str(exc), err=True)
         raise typer.Exit(1) from exc
     typer.echo(f"Created {len(created)} files in {destination}")
+
+
+@plugin_app.command("list")
+def plugin_list(
+    output: Annotated[OutputFormat, typer.Option("--output", "-o")] = OutputFormat.HUMAN,
+) -> None:
+    """Discover and validate installed graphgpt.plugins entry points."""
+    inspections = inspect_installed_plugins()
+    if output == OutputFormat.JSON:
+        typer.echo(json.dumps([item.to_dict() for item in inspections], indent=2))
+    elif not inspections:
+        typer.echo("No GraphGPT plugins installed.")
+    else:
+        for item in inspections:
+            if item.healthy and item.manifest:
+                capabilities = ",".join(sorted(item.manifest.capabilities))
+                package = f" ({item.distribution})" if item.distribution else ""
+                typer.echo(f"OK {item.name} {item.manifest.version} [{capabilities}]{package}")
+            else:
+                for diagnostic in item.diagnostics:
+                    typer.echo(diagnostic.render())
+    if any(not item.healthy for item in inspections):
+        raise typer.Exit(1)
+
+
+@plugin_app.command("init")
+def plugin_init(
+    destination: Path,
+    name: Annotated[str, typer.Option("--name", "-n")],
+) -> None:
+    """Create an installable community plugin package with tests and entry point."""
+    try:
+        created = initialize_plugin(name, destination)
+    except (ValueError, OSError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(1) from exc
+    typer.echo(f"Created plugin '{name}' with {len(created)} files in {destination}")
 
 
 @app.command()

@@ -562,14 +562,14 @@ YAML 工作流和插件本质上会触发代码导入与外部调用，安全不
 
 ### 12.4 M3 — 插件、子图与发布准备
 
-- [ ] **GraphGPT-301 / P0** 实现子图引用、输入输出映射和持久化模式。
-- [ ] **GraphGPT-302 / P1** 实现节点 retry、cache、metadata 策略。
-- [ ] **GraphGPT-303 / P0** 冻结 entry point 名称与插件协议候选版。
+- [x] **GraphGPT-301 / P0** 实现子图引用、输入输出映射和持久化模式。
+- [x] **GraphGPT-302 / P1** 实现节点 retry、cache、metadata 策略。
+- [x] **GraphGPT-303 / P0** 冻结 entry point 名称与插件协议候选版。
 - [ ] **GraphGPT-304 / P0** 发布 `graphgpt-testkit` 插件契约测试。
 - [ ] **GraphGPT-305 / P0** 实现 `migrate` 和 DSL 版本升级测试。
 - [~] **GraphGPT-306 / P1** 实现 Mermaid、规范化 JSON 与可选 Python 导出。
 - [ ] **GraphGPT-307 / P1** 建立 10/100/1000 节点编译与内存基准。
-- [ ] **GraphGPT-308 / P0** 完成文档站、教程、API、插件和迁移文档。
+- [~] **GraphGPT-308 / P0** 完成文档站、教程、API、插件和迁移文档。
 - [ ] **GraphGPT-309 / P0** 完成依赖审计、SBOM、签名和发布 dry-run。
 
 ### 12.5 M4 — 稳定版与治理
@@ -577,8 +577,8 @@ YAML 工作流和插件本质上会触发代码导入与外部调用，安全不
 - [ ] **GraphGPT-401 / P0** 收集至少两个外部试点的兼容与可用性反馈。
 - [ ] **GraphGPT-402 / P0** 将 DSL 从 `v1alpha1` 迁移并冻结为 `v1`。
 - [ ] **GraphGPT-403 / P0** 冻结公共 Python API、CLI 退出码和插件契约。
-- [ ] **GraphGPT-404 / P0** 发布弃用、支持与安全响应政策。
-- [ ] **GraphGPT-405 / P1** 建立 RFC、贡献指南、行为准则和 maintainer 流程。
+- [~] **GraphGPT-404 / P0** 发布弃用、支持与安全响应政策。
+- [x] **GraphGPT-405 / P1** 建立 RFC、贡献指南、行为准则和 maintainer 流程。
 - [ ] **GraphGPT-406 / P0** 完成 v1.0 发布、升级和回滚演练。
 
 ## 13. 发布与版本策略
