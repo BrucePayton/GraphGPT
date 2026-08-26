@@ -98,6 +98,31 @@ n8n 工作流默认保持未激活，导入后需显式选择凭据。`base-url`
 执行端点，核心包不会另起一套应用服务器。详细契约和第三方适配器扩展方式见
 [`docs/ECOSYSTEM_ADAPTERS.md`](docs/ECOSYSTEM_ADAPTERS.md)。
 
+## 通用流程转换器
+
+GraphGPT 使用 `graphgpt.dev/universal/v1alpha1` 统一 IR 在 MCP、Agent Skills、GraphGPT
+Workflow、LangGraph 图结构、Dify 与 n8n 之间转换。每次转换都会生成 `conversion-report.json`，
+明确标注 `exact`、`adapted`、`lossy` 或 `unsupported`：
+
+```bash
+graphgpt formats
+graphgpt detect ./some-asset
+
+graphgpt convert ./some-asset \
+  --from auto \
+  --to mcp \
+  --base-url https://graphgpt.example.com \
+  --output ./converted
+
+# CI 中拒绝有损转换
+graphgpt convert ./workflow.yaml --to skill --output ./skill --fail-on-lossy
+```
+
+转换器不执行输入代码。MCP 输出是能力快照、LangGraph 输出是结构 JSON；需要运行时的目标
+通过安全的 HTTP/MCP 工具边界连接原执行引擎，避免把任意 Python 或厂商节点静默改写为
+错误语义。完整矩阵和扩展协议见
+[`docs/UNIVERSAL_CONVERTER.md`](docs/UNIVERSAL_CONVERTER.md)。
+
 ## 最小 DSL
 
 ```yaml

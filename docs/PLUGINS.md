@@ -55,8 +55,8 @@ acme = "graphgpt_acme.plugin:plugin"
 ```
 
 The current API is `graphgpt.dev/plugin/v1alpha1`. Supported capabilities are `node`, `route`,
-`tool`, `checkpointer`, `store`, `cache`, and `ecosystem`. Plugins should reject unknown resource
-names and must not mutate the read-only configuration mapping passed to `resolve`.
+`tool`, `checkpointer`, `store`, `cache`, `ecosystem`, and `converter`. Plugins should reject unknown
+resource names and must not mutate the read-only configuration mapping passed to `resolve`.
 
 ## References
 
@@ -67,11 +67,17 @@ names and must not mutate the read-only configuration mapping passed to `resolve
 | tool | `plugin:acme/my-tool` in agent/tool configuration |
 | checkpointer/store/cache | `plugin:acme/backend` in runtime configuration |
 | ecosystem | `--target plugin:acme/my-framework` in `ecosystem export` |
+| converter | `--from/--to plugin:acme/my-format` in `convert` |
 
 An `ecosystem` resource returns an object implementing the `EcosystemRenderer` protocol. It receives
 a framework-neutral `InvocationContract` plus read-only options and returns a tuple of safe relative
 `EcosystemArtifact` files. Provider SDKs stay in the plugin distribution. See
 [`ECOSYSTEM_ADAPTERS.md`](ECOSYSTEM_ADAPTERS.md) for the full contract.
+
+A `converter` resource returns a `ConversionAdapter` with `load` and `render` methods. It must map
+through `UniversalAsset`, return explicit `ConversionNotice` values for semantic degradation, and
+must not execute source assets during detection or import. See
+[`UNIVERSAL_CONVERTER.md`](UNIVERSAL_CONVERTER.md).
 
 ## Diagnostics and compatibility
 

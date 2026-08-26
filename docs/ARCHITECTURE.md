@@ -18,6 +18,8 @@ flowchart LR
     Native --> Server["LangGraph CLI / Agent Server"]
     IR --> Contract["调用契约 v1alpha1"]
     Contract --> Ecosystems["Dify / n8n / 第三方适配器"]
+    Sources["MCP / Skills / Dify / LangGraph"] --> Universal["Universal IR + Fidelity"]
+    Universal --> Targets["Workflow / MCP / Skills / Dify / LangGraph"]
     Callbacks["LangSmith / Langfuse"] --> Native
 ```
 
@@ -42,6 +44,7 @@ flowchart LR
 4. `python:module.symbol` 逃生舱，受模块 allowlist 限制；
 5. checkpointer/store 使用同一运行时解析端口，`server-managed` 明确交给平台。
 6. `ecosystem` 插件能力把稳定调用契约渲染为第三方框架资产，不改写 GraphIR 或接管运行时。
+7. `converter` 插件通过 Universal IR 双向转换；任何无法等价表达的语义必须进入 fidelity 报告。
 
 后续插件工厂会独立引入协议版本，在 v0.1 中不提前冻结过宽 API。
 

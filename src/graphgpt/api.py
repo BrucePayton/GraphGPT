@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Literal, cast
 
+from graphgpt.adapters.converters import builtin_converter, detect_format
 from graphgpt.adapters.ecosystems import builtin_ecosystem_renderer
 from graphgpt.adapters.subgraph_compiler import compile_graph_tree
 from graphgpt.adapters.yaml_loader import SafeYamlWorkflowLoader
@@ -11,9 +13,14 @@ from graphgpt.application.ecosystem import (
     EcosystemArtifact,
     build_invocation_contract,
 )
-from graphgpt.application.ports import EcosystemRenderer
+from graphgpt.application.ports import ConversionAdapter, EcosystemRenderer
 from graphgpt.application.subgraphs import load_graph_tree
 from graphgpt.application.transform import to_ir
+from graphgpt.domain.conversion import (
+    ConversionArtifact,
+    ConversionResult,
+    Fidelity,
+)
 from graphgpt.domain.diagnostics import Diagnostic, GraphGPTError, Severity
 from graphgpt.domain.ir import GraphIR
 from graphgpt.dsl.models import WorkflowDocument
@@ -102,3 +109,67 @@ def write_ecosystem_bundle(
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(artifact.content, encoding="utf-8")
     return targets
+
+
+def detect_asset_format(path: str | Path) -> str:
+    """Detect a supported workflow/capability asset without executing its code."""
+    return detect_format(Path(path))
+
+
+def convert_asset(
+    path: str | Path,
+    *,
+    target: str,
+    source: str = "auto",
+    options: dict[str, Any] | None = None,
+    registry: BindingRegistry | None = None,
+) -> ConversionResult:
+    """Convert an asset through the universal IR and report semantic fidelity."""
+    source_format = detect_asset_format(path) if source == "auto" else source
+    adapter_options = dict(options or {})
+    source_adapter = _conversion_adapter(source_format, registry, adapter_options)
+    target_adapter = _conversion_adapter(target, registry, adapter_options)
+    asset, import_notices = source_adapter.load(Path(path), adapter_options)
+    artifacts, export_fidelity, export_notices = target_adapter.render(asset, adapter_options)
+    notices = (*import_notices, *export_notices)
+    fidelity = _worst_fidelity(export_fidelity, *(notice.fidelity for notice in notices))
+    preliminary = ConversionResult(source_format, target, fidelity, artifacts, notices)
+    report = ConversionArtifact(
+        "conversion-report.json",
+        json.dumps(preliminary.report(), indent=2, sort_keys=True) + "\n",
+        "application/json",
+    )
+    return ConversionResult(source_format, target, fidelity, (*artifacts, report), notices)
+
+
+def write_conversion_result(result: ConversionResult, destination: str | Path) -> tuple[Path, ...]:
+    """Write converted files using the same safe, no-overwrite policy as ecosystem bundles."""
+    ecosystem_artifacts = tuple(
+        EcosystemArtifact(item.path, item.content, item.media_type) for item in result.artifacts
+    )
+    return write_ecosystem_bundle(ecosystem_artifacts, destination)
+
+
+def _conversion_adapter(
+    format_name: str,
+    registry: BindingRegistry | None,
+    options: dict[str, Any],
+) -> ConversionAdapter:
+    if format_name.startswith("plugin:"):
+        candidate = (registry or BindingRegistry()).resolve_converter(format_name, options)
+        if not callable(getattr(candidate, "load", None)) or not callable(
+            getattr(candidate, "render", None)
+        ):
+            raise ValueError(f"converter plugin '{format_name}' did not return an adapter")
+        return cast(ConversionAdapter, candidate)
+    return builtin_converter(format_name)
+
+
+def _worst_fidelity(first: Fidelity, *rest: Fidelity) -> Fidelity:
+    order = {
+        Fidelity.EXACT: 0,
+        Fidelity.ADAPTED: 1,
+        Fidelity.LOSSY: 2,
+        Fidelity.UNSUPPORTED: 3,
+    }
+    return max((first, *rest), key=order.__getitem__)

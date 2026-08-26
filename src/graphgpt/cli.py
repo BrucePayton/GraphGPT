@@ -12,16 +12,21 @@ from typing import Annotated, Any
 import typer
 
 from graphgpt import __version__
+from graphgpt.adapters.converters import CONVERSION_FORMATS
 from graphgpt.adapters.ecosystems import BUILTIN_ECOSYSTEM_TARGETS
 from graphgpt.api import (
     compile_workflow,
+    convert_asset,
+    detect_asset_format,
     inspect_workflow,
     render_ecosystem_bundle,
     validate_workflow,
+    write_conversion_result,
     write_ecosystem_bundle,
 )
 from graphgpt.application.secrets import redact_secrets
 from graphgpt.domain.diagnostics import GraphGPTError, Severity
+from graphgpt.domain.conversion import Fidelity
 from graphgpt.dsl.models import WorkflowDocument
 from graphgpt.observability import callback_for
 from graphgpt.plugin import PLUGIN_API_VERSION, inspect_installed_plugins
@@ -237,6 +242,56 @@ def ecosystem_export(
         typer.echo(str(exc), err=True)
         raise typer.Exit(1) from exc
     typer.echo(f"Created {len(created)} {target} ecosystem artifacts in {output}")
+
+
+@app.command("formats")
+def conversion_formats() -> None:
+    """List built-in universal conversion formats."""
+    for format_name in CONVERSION_FORMATS:
+        typer.echo(format_name)
+
+
+@app.command("detect")
+def detect_command(path: Path) -> None:
+    """Detect an MCP, Skill, workflow, LangGraph, Dify, or universal asset."""
+    try:
+        typer.echo(detect_asset_format(path))
+    except (OSError, ValueError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(1) from exc
+
+
+@app.command("convert")
+def convert_command(
+    path: Path,
+    target: Annotated[str, typer.Option("--to", "-t")],
+    output: Annotated[Path, typer.Option("--output", "-o")],
+    source: Annotated[str, typer.Option("--from", "-f")] = "auto",
+    base_url: Annotated[str | None, typer.Option("--base-url")] = None,
+    fail_on_lossy: Annotated[bool, typer.Option("--fail-on-lossy")] = False,
+) -> None:
+    """Convert through the universal IR and emit a machine-readable fidelity report."""
+    try:
+        options = {"base_url": base_url} if base_url else {}
+        result = convert_asset(
+            path,
+            source=source,
+            target=target,
+            options=options,
+        )
+        if fail_on_lossy and result.fidelity in {Fidelity.LOSSY, Fidelity.UNSUPPORTED}:
+            typer.echo(json.dumps(result.report(), indent=2), err=True)
+            raise typer.Exit(2)
+        created = write_conversion_result(result, output)
+    except typer.Exit:
+        raise
+    except (GraphGPTError, FileExistsError, OSError, ValueError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(1) from exc
+    typer.echo(
+        f"Created {len(created)} artifacts in {output} "
+        f"({result.source_format} -> {result.target_format}, {result.fidelity.value})"
+    )
 
 
 @app.command()

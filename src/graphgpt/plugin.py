@@ -20,9 +20,10 @@ PluginCapability = Literal[
     "store",
     "cache",
     "ecosystem",
+    "converter",
 ]
 PLUGIN_CAPABILITIES = frozenset(
-    {"node", "route", "tool", "checkpointer", "store", "cache", "ecosystem"}
+    {"node", "route", "tool", "checkpointer", "store", "cache", "ecosystem", "converter"}
 )
 
 

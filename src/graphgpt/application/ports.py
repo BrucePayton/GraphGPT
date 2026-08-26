@@ -5,6 +5,12 @@ from types import MappingProxyType
 from typing import Any, Literal, Protocol
 
 from graphgpt.application.ecosystem import EcosystemArtifact, InvocationContract
+from graphgpt.domain.conversion import (
+    ConversionArtifact,
+    ConversionNotice,
+    Fidelity,
+    UniversalAsset,
+)
 from graphgpt.domain.ir import GraphIR
 from graphgpt.dsl.models import WorkflowDocument
 
@@ -38,3 +44,20 @@ class EcosystemRenderer(Protocol):
         contract: InvocationContract,
         options: MappingProxyType[str, Any],
     ) -> tuple[EcosystemArtifact, ...]: ...
+
+
+class ConversionAdapter(Protocol):
+    @property
+    def format(self) -> str: ...
+
+    def load(
+        self, path: Path, options: dict[str, Any]
+    ) -> tuple[UniversalAsset, tuple[ConversionNotice, ...]]: ...
+
+    def render(
+        self, asset: UniversalAsset, options: dict[str, Any]
+    ) -> tuple[
+        tuple[ConversionArtifact, ...],
+        Fidelity,
+        tuple[ConversionNotice, ...],
+    ]: ...

@@ -26,6 +26,14 @@ host remains responsible for orchestration, credentials, and user-facing applica
 Third-party plugins can declare the `ecosystem` capability and resolve custom renderers through a
 `plugin:<plugin>/<adapter>` target. See [the adapter contract](docs/ECOSYSTEM_ADAPTERS.md).
 
+## Universal conversion
+
+The `graphgpt.dev/universal/v1alpha1` IR represents interfaces, instructions, capabilities, nodes,
+edges, bindings, and vendor extensions together. Built-in adapters cover GraphGPT Workflow, MCP
+capability snapshots, Agent Skills, LangGraph graph JSON, Dify DSL/Custom Tools, and n8n workflow
+JSON. Every result includes a fidelity report; see
+[the conversion matrix](docs/UNIVERSAL_CONVERTER.md).
+
 ## Community plugins
 
 No third-party plugin is endorsed yet. This table will list independently maintained packages after
@@ -33,7 +41,7 @@ their first compatibility review.
 
 | Package | Capabilities | Maintainer | GraphGPT range | Status |
 |---|---|---|---|---|
-| _Submit a PR_ | node/route/tool/runtime/ecosystem | — | — | candidate |
+| _Submit a PR_ | node/route/tool/runtime/ecosystem/converter | — | — | candidate |
 
 Listing does not transfer ownership or imply a security audit. Users must evaluate publishers and
 package provenance themselves.

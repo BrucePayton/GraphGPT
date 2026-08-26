@@ -7,6 +7,12 @@
   sub-workflow 导出；
 - 插件协议增加 `ecosystem` 能力，第三方框架适配器无需修改核心 IR；
 - 导出默认使用 Bearer 认证、不写入密钥，并拒绝路径穿越和覆盖已有资产。
+- 增加 `graphgpt.dev/universal/v1alpha1` 通用流程 IR，以及 `formats`、`detect`、`convert`
+  命令；
+- 首批支持 GraphGPT Workflow、MCP capability snapshot、Agent Skills、LangGraph graph JSON、
+  Dify DSL/Custom Tool 与 n8n workflow JSON 转换；
+- 每次转换生成机器可读 fidelity 报告，并支持 `--fail-on-lossy` CI 门禁；
+- 插件协议增加 `converter` 能力，允许社区添加 Coze、Flowise、CrewAI 等格式适配器。
 
 ## 0.8.0 - 2026-08-22
 
