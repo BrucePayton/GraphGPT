@@ -25,8 +25,8 @@ from graphgpt.api import (
     write_ecosystem_bundle,
 )
 from graphgpt.application.secrets import redact_secrets
-from graphgpt.domain.diagnostics import GraphGPTError, Severity
 from graphgpt.domain.conversion import Fidelity
+from graphgpt.domain.diagnostics import GraphGPTError, Severity
 from graphgpt.dsl.models import WorkflowDocument
 from graphgpt.observability import callback_for
 from graphgpt.plugin import PLUGIN_API_VERSION, inspect_installed_plugins
