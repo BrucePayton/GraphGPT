@@ -361,6 +361,7 @@ def doctor() -> None:
     typer.echo(f"langgraph CLI: {shutil.which('langgraph') or 'not installed'}")
     typer.echo("templates: " + ", ".join(TEMPLATES))
     typer.echo("ecosystems: " + ", ".join(BUILTIN_ECOSYSTEM_TARGETS))
+    typer.echo("conversion formats: " + ", ".join(CONVERSION_FORMATS))
 
 
 def _emit_diagnostics(diagnostics: list[Any], output: OutputFormat) -> None:

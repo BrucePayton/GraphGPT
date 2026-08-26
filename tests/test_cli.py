@@ -37,6 +37,9 @@ def test_cli_validate_inspect_schema_export_and_doctor(tmp_path: Path) -> None:
     assert doctor.exit_code == 0
     assert "GraphGPT 0.8.0" in doctor.stdout
     assert "plugin API: graphgpt.dev/plugin/v1alpha1" in doctor.stdout
+    assert "conversion formats: universal, graphgpt, mcp, skill, langgraph, dify, n8n" in (
+        doctor.stdout
+    )
 
 
 def test_cli_init_and_bad_input(tmp_path: Path) -> None:
