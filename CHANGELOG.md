@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- 增加 `graphgpt.dev/ecosystem/v1alpha1` 框架无关调用契约；
+- 增加 `graphgpt ecosystem list/export`、Dify OpenAPI Custom Tool 和 n8n callable
+  sub-workflow 导出；
+- 插件协议增加 `ecosystem` 能力，第三方框架适配器无需修改核心 IR；
+- 导出默认使用 Bearer 认证、不写入密钥，并拒绝路径穿越和覆盖已有资产。
+
 ## 0.8.0 - 2026-08-22
 
 - 增加已安装插件发现、协议验证及 human/JSON 健康检查；

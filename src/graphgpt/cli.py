@@ -12,7 +12,14 @@ from typing import Annotated, Any
 import typer
 
 from graphgpt import __version__
-from graphgpt.api import compile_workflow, inspect_workflow, validate_workflow
+from graphgpt.adapters.ecosystems import BUILTIN_ECOSYSTEM_TARGETS
+from graphgpt.api import (
+    compile_workflow,
+    inspect_workflow,
+    render_ecosystem_bundle,
+    validate_workflow,
+    write_ecosystem_bundle,
+)
 from graphgpt.application.secrets import redact_secrets
 from graphgpt.domain.diagnostics import GraphGPTError, Severity
 from graphgpt.dsl.models import WorkflowDocument
@@ -22,7 +29,9 @@ from graphgpt.project import TEMPLATES, initialize_plugin, initialize_project, t
 
 app = typer.Typer(help="GraphGPT: compile versioned YAML workflows to native LangGraph.")
 plugin_app = typer.Typer(help="Create, inspect, and validate GraphGPT plugins.")
+ecosystem_app = typer.Typer(help="Export GraphGPT workflows to agent framework ecosystems.")
 app.add_typer(plugin_app, name="plugin")
+app.add_typer(ecosystem_app, name="ecosystem")
 
 
 class OutputFormat(StrEnum):
@@ -200,6 +209,36 @@ def plugin_init(
     typer.echo(f"Created plugin '{name}' with {len(created)} files in {destination}")
 
 
+@ecosystem_app.command("list")
+def ecosystem_list() -> None:
+    """List built-in ecosystem export targets."""
+    for target in BUILTIN_ECOSYSTEM_TARGETS:
+        typer.echo(target)
+
+
+@ecosystem_app.command("export")
+def ecosystem_export(
+    path: Path,
+    target: Annotated[str, typer.Option("--target", "-t")],
+    base_url: Annotated[str, typer.Option("--base-url")],
+    output: Annotated[Path, typer.Option("--output", "-o")],
+    auth: Annotated[str, typer.Option("--auth")] = "bearer",
+) -> None:
+    """Create importable Dify, n8n, or plugin-provided integration assets."""
+    try:
+        artifacts = render_ecosystem_bundle(
+            path,
+            target=target,
+            base_url=base_url,
+            auth=auth,
+        )
+        created = write_ecosystem_bundle(artifacts, output)
+    except (GraphGPTError, FileExistsError, OSError, ValueError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(1) from exc
+    typer.echo(f"Created {len(created)} {target} ecosystem artifacts in {output}")
+
+
 @app.command()
 def schema(output: Annotated[Path | None, typer.Option("--output", "-o")] = None) -> None:
     """Export the v1alpha1 JSON Schema."""
@@ -266,6 +305,7 @@ def doctor() -> None:
         typer.echo(f"{package}: {version}")
     typer.echo(f"langgraph CLI: {shutil.which('langgraph') or 'not installed'}")
     typer.echo("templates: " + ", ".join(TEMPLATES))
+    typer.echo("ecosystems: " + ", ".join(BUILTIN_ECOSYSTEM_TARGETS))
 
 
 def _emit_diagnostics(diagnostics: list[Any], output: OutputFormat) -> None:

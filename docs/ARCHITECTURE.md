@@ -16,6 +16,8 @@ flowchart LR
     Compiler --> Native["CompiledStateGraph"]
     Native --> CLI["invoke / stream"]
     Native --> Server["LangGraph CLI / Agent Server"]
+    IR --> Contract["调用契约 v1alpha1"]
+    Contract --> Ecosystems["Dify / n8n / 第三方适配器"]
     Callbacks["LangSmith / Langfuse"] --> Native
 ```
 
@@ -39,6 +41,7 @@ flowchart LR
 3. 内置适配器：`langchain:model`、`langchain:agent`、`langgraph:tool-node`；
 4. `python:module.symbol` 逃生舱，受模块 allowlist 限制；
 5. checkpointer/store 使用同一运行时解析端口，`server-managed` 明确交给平台。
+6. `ecosystem` 插件能力把稳定调用契约渲染为第三方框架资产，不改写 GraphIR 或接管运行时。
 
 后续插件工厂会独立引入协议版本，在 v0.1 中不提前冻结过宽 API。
 
@@ -63,4 +66,3 @@ flowchart LR
 - `Command`、`Send`、子图与 retry/cache 的稳定 DSL 延后到 0.2；
 - 项目名 GraphGPT 与现有图学习研究项目存在同名，Python distribution 使用
   `graphgpt-builder`，import/CLI 保持 `graphgpt`。
-

@@ -87,6 +87,16 @@ class BindingRegistry:
             return self._resolve_plugin(reference, kind, {})
         return self._resolve(reference)
 
+    def resolve_ecosystem(self, reference: str, config: dict[str, Any] | None = None) -> Any:
+        """Resolve a plugin-provided ecosystem renderer."""
+        if not reference.startswith("plugin:"):
+            self._fail(
+                "PLUGIN-002",
+                reference,
+                "ecosystem adapters must use plugin:<plugin-name>/<resource-name>",
+            )
+        return self._resolve_plugin(reference, "ecosystem", config or {})
+
     def _resolve(self, reference: str) -> Any:
         if reference.startswith("registry:"):
             name = reference.removeprefix("registry:")

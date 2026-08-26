@@ -12,9 +12,17 @@ PLUGIN_API_VERSION = "graphgpt.dev/plugin/v1alpha1"
 PLUGIN_ENTRY_POINT_GROUP = "graphgpt.plugins"
 LEGACY_NODE_ENTRY_POINT_GROUP = "graphgpt.nodes"
 
-PluginCapability = Literal["node", "route", "tool", "checkpointer", "store", "cache"]
+PluginCapability = Literal[
+    "node",
+    "route",
+    "tool",
+    "checkpointer",
+    "store",
+    "cache",
+    "ecosystem",
+]
 PLUGIN_CAPABILITIES = frozenset(
-    {"node", "route", "tool", "checkpointer", "store", "cache"}
+    {"node", "route", "tool", "checkpointer", "store", "cache", "ecosystem"}
 )
 
 

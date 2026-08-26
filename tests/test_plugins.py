@@ -6,6 +6,7 @@ import pytest
 
 from graphgpt import (
     PLUGIN_API_VERSION,
+    EcosystemArtifact,
     PluginManifest,
     compile_workflow,
     inspect_installed_plugins,
@@ -87,6 +88,44 @@ def test_resolves_versioned_plugin_capabilities_and_caches_load(
         ("tool", "echo", {}),
         ("cache", "local", {}),
     ]
+
+
+def test_resolves_ecosystem_renderer_from_versioned_plugin(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class Renderer:
+        target = "portable"
+
+        def render(self, contract: object, options: object) -> tuple[EcosystemArtifact, ...]:
+            return (EcosystemArtifact("portable.txt", "ok\n"),)
+
+    class EcosystemPlugin:
+        manifest = PluginManifest(
+            name="portable",
+            version="1.0.0",
+            capabilities=frozenset({"ecosystem"}),
+        )
+
+        def resolve(
+            self,
+            capability: PluginCapability,
+            name: str,
+            config: Mapping[str, Any],
+        ) -> Any:
+            assert (capability, name, dict(config)) == (
+                "ecosystem",
+                "renderer",
+                {"dialect": "v1"},
+            )
+            return Renderer()
+
+    _discovery(monkeypatch, EntryPoint("portable", EcosystemPlugin(), []))
+
+    renderer = BindingRegistry().resolve_ecosystem(
+        "plugin:portable/renderer", {"dialect": "v1"}
+    )
+
+    assert renderer.target == "portable"
 
 
 def test_compiles_plugin_node_from_workflow(

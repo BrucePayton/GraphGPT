@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any, Literal, Protocol
 
+from graphgpt.application.ecosystem import EcosystemArtifact, InvocationContract
 from graphgpt.domain.ir import GraphIR
 from graphgpt.dsl.models import WorkflowDocument
 
@@ -25,3 +27,14 @@ class BindingResolver(Protocol):
         reference: str,
         kind: Literal["checkpointer", "store", "cache"] = "checkpointer",
     ) -> Any: ...
+
+
+class EcosystemRenderer(Protocol):
+    @property
+    def target(self) -> str: ...
+
+    def render(
+        self,
+        contract: InvocationContract,
+        options: MappingProxyType[str, Any],
+    ) -> tuple[EcosystemArtifact, ...]: ...
