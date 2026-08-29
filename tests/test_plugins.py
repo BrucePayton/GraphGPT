@@ -6,7 +6,11 @@ import pytest
 
 from graphgpt import (
     PLUGIN_API_VERSION,
+    ConversionArtifact,
+    EcosystemArtifact,
+    Fidelity,
     PluginManifest,
+    UniversalAsset,
     compile_workflow,
     inspect_installed_plugins,
     validate_plugin,
@@ -87,6 +91,84 @@ def test_resolves_versioned_plugin_capabilities_and_caches_load(
         ("tool", "echo", {}),
         ("cache", "local", {}),
     ]
+
+
+def test_resolves_ecosystem_renderer_from_versioned_plugin(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class Renderer:
+        target = "portable"
+
+        def render(self, contract: object, options: object) -> tuple[EcosystemArtifact, ...]:
+            return (EcosystemArtifact("portable.txt", "ok\n"),)
+
+    class EcosystemPlugin:
+        manifest = PluginManifest(
+            name="portable",
+            version="1.0.0",
+            capabilities=frozenset({"ecosystem"}),
+        )
+
+        def resolve(
+            self,
+            capability: PluginCapability,
+            name: str,
+            config: Mapping[str, Any],
+        ) -> Any:
+            assert (capability, name, dict(config)) == (
+                "ecosystem",
+                "renderer",
+                {"dialect": "v1"},
+            )
+            return Renderer()
+
+    _discovery(monkeypatch, EntryPoint("portable", EcosystemPlugin(), []))
+
+    renderer = BindingRegistry().resolve_ecosystem("plugin:portable/renderer", {"dialect": "v1"})
+
+    assert renderer.target == "portable"
+
+
+def test_resolves_universal_converter_from_versioned_plugin(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class Converter:
+        format = "portable"
+
+        def load(
+            self, path: Path, options: dict[str, Any]
+        ) -> tuple[UniversalAsset, tuple[object, ...]]:
+            return UniversalAsset("portable", "", "workflow", "portable"), ()
+
+        def render(
+            self, asset: UniversalAsset, options: dict[str, Any]
+        ) -> tuple[tuple[ConversionArtifact, ...], Fidelity, tuple[object, ...]]:
+            return (ConversionArtifact("portable.json", "{}\n"),), Fidelity.EXACT, ()
+
+    class ConverterPlugin:
+        manifest = PluginManifest(
+            name="portable-converter",
+            version="1.0.0",
+            capabilities=frozenset({"converter"}),
+        )
+
+        def resolve(
+            self,
+            capability: PluginCapability,
+            name: str,
+            config: Mapping[str, Any],
+        ) -> Any:
+            assert (capability, name) == ("converter", "portable")
+            return Converter()
+
+    _discovery(
+        monkeypatch,
+        EntryPoint("portable-converter", ConverterPlugin(), []),
+    )
+
+    converter = BindingRegistry().resolve_converter("plugin:portable-converter/portable")
+
+    assert converter.format == "portable"
 
 
 def test_compiles_plugin_node_from_workflow(

@@ -18,6 +18,7 @@ GraphGPT 是一个 Python 优先、面向 LangGraph 1.x / LangChain 1.x 的声�
 - Command 动态跳转、Send fan-out、retry/cache、可映射子图与跨文件诊断；
 - 显式注册、受 allowlist 保护的 Python callable、LangChain Runnable、model/agent 和 ToolNode；
 - 版本化第三方插件协议、插件发现/健康检查及独立插件项目生成；
+- 框架无关的远程调用契约，以及 Dify Custom Tool、n8n Agent 子工作流导出；
 - 环境变量 Secret 引用、诊断脱敏，以及精确到 YAML 文件/行/列的 SourceMap；
 - `validate`、`inspect`、`run`、`init`、`export`、`schema`、`doctor`、`dev` CLI；
 - 标准 `langgraph.json` 生成，适配 LangGraph CLI、Agent Server 与 LangSmith Studio；
@@ -70,6 +71,57 @@ graphgpt plugin list --output json
 
 插件作者指南见 [`docs/PLUGINS.md`](docs/PLUGINS.md)，已验证集成和社区插件目录见
 [`ECOSYSTEM.md`](ECOSYSTEM.md)。第三方插件在独立包中维护，不会把 provider SDK 引入核心。
+
+## 智能体框架生态
+
+GraphGPT 不复制 Dify 或 n8n 的执行引擎，而是把图暴露为稳定的工具契约，再生成框架原生、
+可审查的薄适配资产：
+
+```bash
+graphgpt ecosystem list
+
+# 导入 Dify 的 Custom Tool（OpenAPI）
+graphgpt ecosystem export workflow.yaml \
+  --target dify \
+  --base-url https://graphgpt.example.com \
+  --output dist/dify
+
+# 导入 n8n 并作为 sub-workflow / AI workflow tool 调用
+graphgpt ecosystem export workflow.yaml \
+  --target n8n \
+  --base-url https://graphgpt.example.com \
+  --output dist/n8n
+```
+
+两种导出都包含 `graphgpt.contract.json`。默认契约采用 Bearer 认证，不会把密钥写入文件；
+n8n 工作流默认保持未激活，导入后需显式选择凭据。`base-url` 指向部署方提供的 GraphGPT
+执行端点，核心包不会另起一套应用服务器。详细契约和第三方适配器扩展方式见
+[`docs/ECOSYSTEM_ADAPTERS.md`](docs/ECOSYSTEM_ADAPTERS.md)。
+
+## 通用流程转换器
+
+GraphGPT 使用 `graphgpt.dev/universal/v1alpha1` 统一 IR 在 MCP、Agent Skills、GraphGPT
+Workflow、LangGraph 图结构、Dify 与 n8n 之间转换。每次转换都会生成 `conversion-report.json`，
+明确标注 `exact`、`adapted`、`lossy` 或 `unsupported`：
+
+```bash
+graphgpt formats
+graphgpt detect ./some-asset
+
+graphgpt convert ./some-asset \
+  --from auto \
+  --to mcp \
+  --base-url https://graphgpt.example.com \
+  --output ./converted
+
+# CI 中拒绝有损转换
+graphgpt convert ./workflow.yaml --to skill --output ./skill --fail-on-lossy
+```
+
+转换器不执行输入代码。MCP 输出是能力快照、LangGraph 输出是结构 JSON；需要运行时的目标
+通过安全的 HTTP/MCP 工具边界连接原执行引擎，避免把任意 Python 或厂商节点静默改写为
+错误语义。完整矩阵和扩展协议见
+[`docs/UNIVERSAL_CONVERTER.md`](docs/UNIVERSAL_CONVERTER.md)。
 
 ## 最小 DSL
 

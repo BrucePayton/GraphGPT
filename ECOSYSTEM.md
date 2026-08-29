@@ -12,7 +12,27 @@ available without a second runtime.
 | LangChain 1.x | Models, agents, tools, Runnable nodes | `graphgpt-builder[langchain]` |
 | LangSmith | Standard tracing environment and callbacks | `--trace langsmith` |
 | Langfuse 3.x | Optional LangChain callback adapter | `graphgpt-builder[langfuse]` |
+| Dify | OpenAPI Custom Tool export | `graphgpt ecosystem export --target dify` |
+| n8n | Importable callable sub-workflow | `graphgpt ecosystem export --target n8n` |
 | Third-party extensions | Versioned Python entry points | `graphgpt.plugins` |
+
+## Agent framework adapters
+
+Every export includes the versioned `graphgpt.dev/ecosystem/v1alpha1` invocation contract. Built-in
+renderers translate that contract, not GraphIR execution semantics, into framework-native assets.
+This keeps GraphGPT responsible for graph declaration and compilation while Dify, n8n, or another
+host remains responsible for orchestration, credentials, and user-facing applications.
+
+Third-party plugins can declare the `ecosystem` capability and resolve custom renderers through a
+`plugin:<plugin>/<adapter>` target. See [the adapter contract](docs/ECOSYSTEM_ADAPTERS.md).
+
+## Universal conversion
+
+The `graphgpt.dev/universal/v1alpha1` IR represents interfaces, instructions, capabilities, nodes,
+edges, bindings, and vendor extensions together. Built-in adapters cover GraphGPT Workflow, MCP
+capability snapshots, Agent Skills, LangGraph graph JSON, Dify DSL/Custom Tools, and n8n workflow
+JSON. Every result includes a fidelity report; see
+[the conversion matrix](docs/UNIVERSAL_CONVERTER.md).
 
 ## Community plugins
 
@@ -21,7 +41,7 @@ their first compatibility review.
 
 | Package | Capabilities | Maintainer | GraphGPT range | Status |
 |---|---|---|---|---|
-| _Submit a PR_ | node/route/tool/runtime | — | — | candidate |
+| _Submit a PR_ | node/route/tool/runtime/ecosystem/converter | — | — | candidate |
 
 Listing does not transfer ownership or imply a security audit. Users must evaluate publishers and
 package provenance themselves.
