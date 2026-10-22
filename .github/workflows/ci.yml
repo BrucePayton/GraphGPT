@@ -18,7 +18,7 @@ jobs:
       - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           python-version: ${{ matrix.python-version }}
-      - run: uv sync --extra dev --extra langchain --extra cli --locked
+      - run: uv sync --extra dev --extra langchain --extra mcp --extra cli --locked
       - run: uv run ruff check .
       - run: uv run mypy
       - run: uv run pytest --cov=graphgpt --cov-report=term-missing --cov-fail-under=90

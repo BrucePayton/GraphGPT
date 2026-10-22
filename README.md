@@ -8,7 +8,7 @@
 GraphGPT 是一个 Python 优先、面向 LangGraph 1.x / LangChain 1.x 的声明式状态图编译器。
 它把版本化 YAML 编译为原生 `StateGraph` / `CompiledStateGraph`，不引入第二套运行时。
 
-> 当前版本：v0.10.0。GraphGPT 支持循环、条件路由和持久化，因此它并不把图限制为 DAG。
+> 当前版本：v0.10.1。GraphGPT 支持循环、条件路由和持久化，因此它并不把图限制为 DAG。
 
 ## 核心能力
 
