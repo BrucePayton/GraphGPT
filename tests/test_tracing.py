@@ -58,7 +58,7 @@ def test_invoke_workflow_injects_trace_metadata_and_preserves_user_metadata(
     assert metadata["tenant"] == "acme"
     assert metadata["graph_id"] == "trace_test"
     assert metadata["node_id"] == "step"
-    assert metadata["generator_version"] == "0.10.0"
+    assert metadata["generator_version"] == "0.10.1"
     assert metadata["graph_version"].startswith("sha256:")
 
 

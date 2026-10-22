@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.10.1 - 2026-10-21
+
+- 修复标准 CI 未安装 `mcp` extra，导致 MCP 契约测试无法收集的问题。
+
 ## 0.10.0 - 2026-10-21
 
 - 增加 LangChain 官方 `MCPAdapter` 工具发现与 Registry 注册能力；
