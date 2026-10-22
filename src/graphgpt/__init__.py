@@ -36,6 +36,8 @@ from graphgpt.plugin import (
 )
 from graphgpt.registry import BindingRegistry
 from graphgpt.runtime import RuntimeCommand, StateInput
+from graphgpt.tracing import graph_version, trace_metadata
+from graphgpt.version import __version__
 
 __all__ = [
     "PLUGIN_API_VERSION",
@@ -58,18 +60,20 @@ __all__ = [
     "UniversalAsset",
     "UniversalEdge",
     "UniversalNode",
+    "__version__",
     "compile_workflow",
     "convert_asset",
     "detect_asset_format",
+    "graph_version",
     "inspect_installed_plugins",
     "inspect_workflow",
     "invoke_workflow",
     "load_workflow",
     "prepare_runtime_input",
     "render_ecosystem_bundle",
+    "trace_metadata",
     "validate_plugin",
     "validate_workflow",
     "write_conversion_result",
     "write_ecosystem_bundle",
 ]
-__version__ = "0.9.0"

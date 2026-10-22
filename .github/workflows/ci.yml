@@ -46,7 +46,7 @@ jobs:
       - name: Install minimum supported ecosystem
         run: |
           uv pip install --python "$RUNNER_TEMP/graphgpt-minimum/bin/python" \
-            -e '.[dev,langchain,cli]' \
+            -e '.[dev,langchain,mcp,cli]' \
             'langgraph==1.2.16' \
             'langchain==1.4.6' \
             'langchain-core==1.6.12' \
@@ -57,4 +57,6 @@ jobs:
           "$RUNNER_TEMP/graphgpt-minimum/bin/python" -m pytest \
             tests/test_runtime_conformance.py \
             tests/test_runtime_security.py \
+            tests/test_mcp.py \
+            tests/test_tracing.py \
             tests/test_langgraph_cli_integration.py
