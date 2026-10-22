@@ -34,7 +34,11 @@ class LangGraphCompiler:
             else:
                 if node.use is None:
                     raise ValueError(f"subgraph node '{node.id}' was not resolved")
-                action = self._resolver.resolve_node(node.use, node.config)
+                action = (
+                    self._resolver.resolve_node(node.use, node.config, node.approval)
+                    if node.approval
+                    else self._resolver.resolve_node(node.use, node.config)
+                )
             builder.add_node(
                 node.id,
                 action,

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from graphgpt.domain.ir import (
+    ApprovalPolicyIR,
+    ApprovalToolPolicyIR,
     CachePolicyIR,
     EdgeIR,
     GraphIR,
@@ -56,6 +58,20 @@ def to_ir(document: WorkflowDocument) -> GraphIR:
                 else None
             ),
             cache=CachePolicyIR(ttl=item.cache.ttl) if item.cache else None,
+            approval=(
+                ApprovalPolicyIR(
+                    mode=item.approval.mode,
+                    tools={
+                        tool_name: ApprovalToolPolicyIR(
+                            allowed_decisions=tuple(policy.allowed_decisions),
+                            description=policy.description,
+                        )
+                        for tool_name, policy in item.approval.tools.items()
+                    },
+                )
+                if item.approval
+                else None
+            ),
         )
         for name, item in sorted(spec.nodes.items())
     )

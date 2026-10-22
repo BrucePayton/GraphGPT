@@ -8,7 +8,7 @@
 GraphGPT 是一个 Python 优先、面向 LangGraph 1.x / LangChain 1.x 的声明式状态图编译器。
 它把版本化 YAML 编译为原生 `StateGraph` / `CompiledStateGraph`，不引入第二套运行时。
 
-> 当前版本：v0.8.0。GraphGPT 支持循环、条件路由和持久化，因此它并不把图限制为 DAG。
+> 当前版本：v0.9.0。GraphGPT 支持循环、条件路由和持久化，因此它并不把图限制为 DAG。
 
 ## 核心能力
 
@@ -37,18 +37,20 @@ uv run graphgpt run workflow.yaml --input '{"approved": true}'
 ```
 
 若要使用 `graphgpt dev` 的官方 CLI 委托，可在生成的项目中执行
-`uv add "graphgpt-builder[cli]>=0.8,<0.9"`。Langfuse 追踪同理使用 `langfuse` extra，
+`uv add "graphgpt-builder[cli]>=0.9,<0.10"`。Langfuse 追踪同理使用 `langfuse` extra，
 LangSmith SDK 已随核心 LangGraph 生态安装并通过标准环境变量启用。
 
 在 Python 中也可以只采用编译器核心：
 
 ```python
-from graphgpt import BindingRegistry, compile_workflow
+from graphgpt import BindingRegistry, StateInput, invoke_workflow
 
 registry = BindingRegistry({"step": lambda state: {"result": "ok"}})
-graph = compile_workflow("workflow.yaml", registry=registry)
-print(graph.invoke({}))
+print(invoke_workflow("workflow.yaml", StateInput({}), registry=registry))
 ```
+
+`StateInput` 与 `RuntimeCommand` 是显式的信任边界：普通 JSON 只能作为已声明状态字段，不能
+伪装成 resume / goto / update 等控制指令。需要原生高级 API 时仍可使用 `compile_workflow`。
 
 ## 插件生态
 
@@ -146,6 +148,18 @@ spec:
 
 `graphgpt validate` 不导入节点代码或访问网络。只有 `compile` / `run` 阶段才解析绑定，
 且 `python:` 引用必须位于 `security.allowedModules` 中。
+
+`langchain:agent` 节点可声明逐工具审批，审批直接映射至官方 HITL middleware：
+
+```yaml
+approval:
+  mode: per_call
+  tools:
+    write_file:
+      allowedDecisions: [approve, reject]
+```
+
+审批工作流必须配置 checkpointer；每个 `per_call` 中断按 interrupt ID 独立恢复。
 
 ## 架构
 

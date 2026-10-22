@@ -11,7 +11,7 @@ from graphgpt.domain.conversion import (
     Fidelity,
     UniversalAsset,
 )
-from graphgpt.domain.ir import GraphIR
+from graphgpt.domain.ir import ApprovalPolicyIR, GraphIR
 from graphgpt.dsl.models import WorkflowDocument
 
 
@@ -24,7 +24,12 @@ class GraphCompiler(Protocol):
 
 
 class BindingResolver(Protocol):
-    def resolve_node(self, reference: str, config: dict[str, Any]) -> Any: ...
+    def resolve_node(
+        self,
+        reference: str,
+        config: dict[str, Any],
+        approval: ApprovalPolicyIR | None = None,
+    ) -> Any: ...
 
     def resolve_route(self, reference: str) -> Any: ...
 

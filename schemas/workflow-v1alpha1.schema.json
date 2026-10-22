@@ -1,5 +1,68 @@
 {
   "$defs": {
+    "ApprovalPolicyModel": {
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "default": "batched",
+          "enum": [
+            "batched",
+            "per_call"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "tools": {
+          "additionalProperties": {
+            "$ref": "#/$defs/ApprovalToolPolicyModel"
+          },
+          "minProperties": 1,
+          "title": "Tools",
+          "type": "object"
+        }
+      },
+      "required": [
+        "tools"
+      ],
+      "title": "ApprovalPolicyModel",
+      "type": "object"
+    },
+    "ApprovalToolPolicyModel": {
+      "additionalProperties": false,
+      "properties": {
+        "allowedDecisions": {
+          "items": {
+            "enum": [
+              "approve",
+              "edit",
+              "reject",
+              "respond"
+            ],
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Alloweddecisions",
+          "type": "array"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        }
+      },
+      "required": [
+        "allowedDecisions"
+      ],
+      "title": "ApprovalToolPolicyModel",
+      "type": "object"
+    },
     "CachePolicyModel": {
       "additionalProperties": false,
       "properties": {
@@ -83,6 +146,17 @@
     "NodeModel": {
       "additionalProperties": false,
       "properties": {
+        "approval": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ApprovalPolicyModel"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "cache": {
           "anyOf": [
             {

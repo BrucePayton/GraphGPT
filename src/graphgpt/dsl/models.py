@@ -42,6 +42,18 @@ class CachePolicyModel(StrictModel):
     ttl: int | None = Field(default=None, gt=0)
 
 
+class ApprovalToolPolicyModel(StrictModel):
+    allowed_decisions: list[Literal["approve", "edit", "reject", "respond"]] = Field(
+        min_length=1, alias="allowedDecisions"
+    )
+    description: str | None = None
+
+
+class ApprovalPolicyModel(StrictModel):
+    mode: Literal["batched", "per_call"] = "batched"
+    tools: dict[str, ApprovalToolPolicyModel] = Field(min_length=1)
+
+
 class SubgraphModel(StrictModel):
     path: str = Field(min_length=1)
     input_map: dict[str, str] = Field(default_factory=dict, alias="input")
@@ -58,6 +70,7 @@ class NodeModel(StrictModel):
     writes: list[str] = Field(default_factory=list)
     retry: RetryPolicyModel | None = None
     cache: CachePolicyModel | None = None
+    approval: ApprovalPolicyModel | None = None
 
     @model_validator(mode="after")
     def exactly_one_action(self) -> NodeModel:

@@ -11,6 +11,7 @@ from typing import Any, Literal, NoReturn, cast
 
 from graphgpt.application.secrets import resolve_environment_refs, validate_secret_config
 from graphgpt.domain.diagnostics import Diagnostic, GraphGPTError, Severity
+from graphgpt.domain.ir import ApprovalPolicyIR
 from graphgpt.plugin import (
     LEGACY_NODE_ENTRY_POINT_GROUP,
     PLUGIN_ENTRY_POINT_GROUP,
@@ -43,7 +44,12 @@ class BindingRegistry:
             for point in entry_points(group=PLUGIN_ENTRY_POINT_GROUP):
                 self._plugin_points.setdefault(point.name, []).append(point)
 
-    def resolve_node(self, reference: str, config: dict[str, Any]) -> Any:
+    def resolve_node(
+        self,
+        reference: str,
+        config: dict[str, Any],
+        approval: ApprovalPolicyIR | None = None,
+    ) -> Any:
         secret_diagnostics = validate_secret_config(config, f"binding.{reference}")
         if secret_diagnostics:
             raise GraphGPTError(secret_diagnostics)
@@ -54,7 +60,9 @@ class BindingRegistry:
         if reference == "langchain:model":
             return _make_model_node(config)
         if reference == "langchain:agent":
-            return _make_agent_node(config, self)
+            return _make_agent_node(config, self, approval)
+        if approval is not None:
+            self._fail("HITL-001", reference, "approval is only supported by langchain:agent")
         if reference == "langgraph:tool-node":
             return _make_tool_node(config, self)
         value = (
@@ -246,7 +254,11 @@ def _make_model_node(config: dict[str, Any]) -> Callable[[dict[str, Any]], dict[
     return invoke
 
 
-def _make_agent_node(config: dict[str, Any], registry: BindingRegistry) -> Any:
+def _make_agent_node(
+    config: dict[str, Any],
+    registry: BindingRegistry,
+    approval: ApprovalPolicyIR | None,
+) -> Any:
     try:
         from langchain.agents import create_agent
     except ImportError as exc:
@@ -255,11 +267,52 @@ def _make_agent_node(config: dict[str, Any], registry: BindingRegistry) -> Any:
     if not isinstance(model, str):
         raise ValueError("langchain:agent requires with.model")
     tools = [registry._resolve(str(item)) for item in config.get("tools", [])]
-    return create_agent(
-        model=model,
-        tools=tools,
-        system_prompt=config.get("systemPrompt"),
-    )
+    middleware: list[Any] = []
+    if approval is not None:
+        tool_names = {_tool_name(tool) for tool in tools}
+        unknown_tools = sorted(set(approval.tools) - tool_names)
+        if unknown_tools:
+            raise ValueError(
+                f"approval references tools not registered on this agent: {unknown_tools}"
+            )
+        try:
+            from langchain.agents.middleware import HumanInTheLoopMiddleware
+        except ImportError as exc:
+            raise RuntimeError(
+                "approval requires langchain>=1.4.6; install GraphGPT with the 'langchain' extra"
+            ) from exc
+        interrupt_on: dict[str, Any] = {
+            tool_name: {
+                "allowed_decisions": list(policy.allowed_decisions),
+                **({"description": policy.description} if policy.description else {}),
+            }
+            for tool_name, policy in approval.tools.items()
+        }
+        try:
+            middleware_factory: Any = HumanInTheLoopMiddleware
+            middleware.append(
+                middleware_factory(
+                    interrupt_on=interrupt_on,
+                    interrupt_mode=approval.mode,
+                )
+            )
+        except TypeError as exc:
+            raise RuntimeError("approval mode requires langchain>=1.4.6") from exc
+    agent_options: dict[str, Any] = {
+        "model": model,
+        "tools": tools,
+        "system_prompt": config.get("systemPrompt"),
+    }
+    if middleware:
+        agent_options["middleware"] = middleware
+    return create_agent(**agent_options)
+
+
+def _tool_name(tool: Any) -> str:
+    name = getattr(tool, "name", None) or getattr(tool, "__name__", None)
+    if not isinstance(name, str) or not name:
+        raise ValueError("agent tools must expose a non-empty name for approval matching")
+    return name
 
 
 def _make_tool_node(config: dict[str, Any], registry: BindingRegistry) -> Any:

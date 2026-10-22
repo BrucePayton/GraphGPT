@@ -34,3 +34,27 @@ jobs:
           "$RUNNER_TEMP/graphgpt-wheel-venv/bin/graphgpt" run "$RUNNER_TEMP/graphgpt-smoke/workflow.yaml" --input '{"count": 0}'
           "$RUNNER_TEMP/graphgpt-wheel-venv/bin/graphgpt" plugin init "$RUNNER_TEMP/graphgpt-plugin" --name ci-plugin
           uv build --project "$RUNNER_TEMP/graphgpt-plugin"
+
+  minimum-compatibility:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          python-version: "3.11"
+      - run: uv venv "$RUNNER_TEMP/graphgpt-minimum"
+      - name: Install minimum supported ecosystem
+        run: |
+          uv pip install --python "$RUNNER_TEMP/graphgpt-minimum/bin/python" \
+            -e '.[dev,langchain,cli]' \
+            'langgraph==1.2.16' \
+            'langchain==1.4.6' \
+            'langchain-core==1.6.12' \
+            'langgraph-cli[inmem]==0.4.36'
+      - name: Run runtime and generated-project contracts
+        run: |
+          export PATH="$RUNNER_TEMP/graphgpt-minimum/bin:$PATH"
+          "$RUNNER_TEMP/graphgpt-minimum/bin/python" -m pytest \
+            tests/test_runtime_conformance.py \
+            tests/test_runtime_security.py \
+            tests/test_langgraph_cli_integration.py
