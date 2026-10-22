@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 0.9.0 - 2026-10-21
+
+- 增加六类 Runtime Conformance 场景，对照生成图与手写原生 LangGraph 的执行语义；
+- 增加严格的 `StateInput` / `RuntimeCommand` 边界，拒绝未声明状态字段与伪造控制输入；
+- 增加节点级 `approval` DSL/IR，并映射至 LangChain HITL 的 `batched` / `per_call` 模式；
+- 将兼容基线提升至 LangGraph 1.2.16、LangChain 1.4.6 与 LangGraph CLI 0.4.36；
+- 增加可追溯实现状态、兼容矩阵和生成工程 CI smoke test 证据；
+
 - 增加 `graphgpt.dev/ecosystem/v1alpha1` 框架无关调用契约；
 - 增加 `graphgpt ecosystem list/export`、Dify OpenAPI Custom Tool 和 n8n callable
   sub-workflow 导出；

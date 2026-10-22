@@ -19,6 +19,7 @@ from graphgpt.api import (
     convert_asset,
     detect_asset_format,
     inspect_workflow,
+    prepare_runtime_input,
     render_ecosystem_bundle,
     validate_workflow,
     write_conversion_result,
@@ -31,6 +32,7 @@ from graphgpt.dsl.models import WorkflowDocument
 from graphgpt.observability import callback_for
 from graphgpt.plugin import PLUGIN_API_VERSION, inspect_installed_plugins
 from graphgpt.project import TEMPLATES, initialize_plugin, initialize_project, to_mermaid
+from graphgpt.runtime import RuntimeCommand, StateInput
 
 app = typer.Typer(help="GraphGPT: compile versioned YAML workflows to native LangGraph.")
 plugin_app = typer.Typer(help="Create, inspect, and validate GraphGPT plugins.")
@@ -127,20 +129,20 @@ def run(
             invocation_config.pop("configurable")
 
         if resume is not None:
-            from langgraph.types import Command
-
             resume_value = json.loads(resume)
-            if resume_value is None:
-                raise ValueError("resume value cannot be null")
             if not configurable.get("thread_id"):
                 raise ValueError("--resume requires --thread-id or config.configurable.thread_id")
-            payload: Any = Command(resume=resume_value)
+            runtime_input: StateInput | RuntimeCommand = RuntimeCommand.resume(resume_value)
         elif continue_thread:
             if not configurable.get("thread_id"):
                 raise ValueError("--continue requires --thread-id or config.configurable.thread_id")
-            payload = None
+            runtime_input = RuntimeCommand.continue_thread()
         else:
-            payload = json.loads(input or "{}")
+            parsed_input = json.loads(input or "{}")
+            if not isinstance(parsed_input, dict):
+                raise ValueError("input must be a JSON object")
+            runtime_input = StateInput(parsed_input)
+        payload: Any = prepare_runtime_input(path, runtime_input)
         graph = compile_workflow(path)
         callback = callback_for(trace)  # type: ignore[arg-type]
         if callback:

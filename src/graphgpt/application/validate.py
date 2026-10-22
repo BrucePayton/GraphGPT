@@ -25,6 +25,32 @@ def validate_ir(graph: GraphIR) -> list[Diagnostic]:
     for node_ir in graph.nodes:
         node_path = f"spec.nodes.{node_ir.id}"
         diagnostics.extend(validate_secret_config(node_ir.config, node_path + ".with"))
+        if node_ir.approval and node_ir.use != "langchain:agent":
+            diagnostics.append(
+                _error(
+                    "HITL-001",
+                    node_path + ".approval",
+                    "approval is only supported for langchain:agent nodes",
+                )
+            )
+        if node_ir.approval and not graph.runtime.checkpointer:
+            diagnostics.append(
+                _error(
+                    "HITL-002",
+                    "spec.runtime.checkpointer",
+                    "approval requires a checkpointer to resume safely",
+                )
+            )
+        if node_ir.approval:
+            for tool_name, policy in node_ir.approval.tools.items():
+                if len(policy.allowed_decisions) != len(set(policy.allowed_decisions)):
+                    diagnostics.append(
+                        _error(
+                            "HITL-003",
+                            node_path + f".approval.tools.{tool_name}.allowedDecisions",
+                            "approval decisions must be unique",
+                        )
+                    )
         if node_ir.retry and node_ir.retry.max_interval < node_ir.retry.initial_interval:
             diagnostics.append(
                 _error(

@@ -19,7 +19,7 @@ def test_init_generates_langgraph_cli_project(tmp_path: Path) -> None:
     }
     assert "compile_workflow" in (output / "graph.py").read_text(encoding="utf-8")
     package_config = (output / "pyproject.toml").read_text(encoding="utf-8")
-    assert 'graphgpt-builder>=0.8,<0.9' in package_config
+    assert 'graphgpt-builder>=0.9,<0.10' in package_config
 
 
 def test_template_files_ignore_runtime_artifacts(tmp_path: Path) -> None:

@@ -25,6 +25,7 @@ from graphgpt.domain.diagnostics import Diagnostic, GraphGPTError, Severity
 from graphgpt.domain.ir import GraphIR
 from graphgpt.dsl.models import WorkflowDocument
 from graphgpt.registry import BindingRegistry
+from graphgpt.runtime import RuntimeCommand, StateInput, adapt_runtime_input
 
 
 def load_workflow(path: str | Path) -> WorkflowDocument:
@@ -52,6 +53,28 @@ def compile_workflow(
     if errors:
         raise GraphGPTError(errors)
     return compile_graph_tree(tree, registry=registry, bindings=bindings)
+
+
+def prepare_runtime_input(
+    path: str | Path,
+    value: StateInput | RuntimeCommand,
+) -> Any:
+    """Validate data/control separation and create a native LangGraph input."""
+    return adapt_runtime_input(inspect_workflow(path), value)
+
+
+def invoke_workflow(
+    path: str | Path,
+    value: StateInput | RuntimeCommand,
+    *,
+    config: dict[str, Any] | None = None,
+    registry: BindingRegistry | None = None,
+    bindings: dict[str, Any] | None = None,
+) -> Any:
+    """Compile and invoke through the strict public runtime-input contract."""
+    payload = prepare_runtime_input(path, value)
+    graph = compile_workflow(path, registry=registry, bindings=bindings)
+    return graph.invoke(payload, config=config)
 
 
 def render_ecosystem_bundle(

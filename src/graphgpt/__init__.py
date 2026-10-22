@@ -5,7 +5,9 @@ from graphgpt.api import (
     convert_asset,
     detect_asset_format,
     inspect_workflow,
+    invoke_workflow,
     load_workflow,
+    prepare_runtime_input,
     render_ecosystem_bundle,
     validate_workflow,
     write_conversion_result,
@@ -33,6 +35,7 @@ from graphgpt.plugin import (
     validate_plugin,
 )
 from graphgpt.registry import BindingRegistry
+from graphgpt.runtime import RuntimeCommand, StateInput
 
 __all__ = [
     "PLUGIN_API_VERSION",
@@ -50,6 +53,8 @@ __all__ = [
     "PluginCapability",
     "PluginInspection",
     "PluginManifest",
+    "RuntimeCommand",
+    "StateInput",
     "UniversalAsset",
     "UniversalEdge",
     "UniversalNode",
@@ -58,11 +63,13 @@ __all__ = [
     "detect_asset_format",
     "inspect_installed_plugins",
     "inspect_workflow",
+    "invoke_workflow",
     "load_workflow",
+    "prepare_runtime_input",
     "render_ecosystem_bundle",
     "validate_plugin",
     "validate_workflow",
     "write_conversion_result",
     "write_ecosystem_bundle",
 ]
-__version__ = "0.8.0"
+__version__ = "0.9.0"

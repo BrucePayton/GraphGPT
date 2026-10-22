@@ -48,6 +48,21 @@ class CachePolicyIR:
     ttl: int | None = None
 
 
+ApprovalDecision = Literal["approve", "edit", "reject", "respond"]
+
+
+@dataclass(frozen=True, slots=True)
+class ApprovalToolPolicyIR:
+    allowed_decisions: tuple[ApprovalDecision, ...]
+    description: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class ApprovalPolicyIR:
+    mode: Literal["batched", "per_call"] = "batched"
+    tools: dict[str, ApprovalToolPolicyIR] = field(default_factory=dict)
+
+
 @dataclass(frozen=True, slots=True)
 class SubgraphIR:
     path: str
@@ -67,6 +82,7 @@ class NodeIR:
     writes: tuple[str, ...] = ()
     retry: RetryPolicyIR | None = None
     cache: CachePolicyIR | None = None
+    approval: ApprovalPolicyIR | None = None
 
 
 @dataclass(frozen=True, slots=True)
