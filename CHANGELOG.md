@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.10.0 - 2026-10-21
+
+- 增加 LangChain 官方 `MCPAdapter` 工具发现与 Registry 注册能力；
+- MCP 工具保留输入 Schema、输出语义和来源 metadata，重复或未知能力明确失败；
+- 增加确定性的 `graph_id`、`graph_version`、`node_id` 与 `generator_version` Trace Metadata；
+- CLI 与公共 `invoke_workflow` 自动注入图身份，节点 metadata 同步携带可追踪版本。
+
 ## 0.9.0 - 2026-10-21
 
 - 增加六类 Runtime Conformance 场景，对照生成图与手写原生 LangGraph 的执行语义；

@@ -33,6 +33,7 @@ from graphgpt.observability import callback_for
 from graphgpt.plugin import PLUGIN_API_VERSION, inspect_installed_plugins
 from graphgpt.project import TEMPLATES, initialize_plugin, initialize_project, to_mermaid
 from graphgpt.runtime import RuntimeCommand, StateInput
+from graphgpt.tracing import merge_trace_config
 
 app = typer.Typer(help="GraphGPT: compile versioned YAML workflows to native LangGraph.")
 plugin_app = typer.Typer(help="Create, inspect, and validate GraphGPT plugins.")
@@ -144,6 +145,7 @@ def run(
             runtime_input = StateInput(parsed_input)
         payload: Any = prepare_runtime_input(path, runtime_input)
         graph = compile_workflow(path)
+        invocation_config = merge_trace_config(inspect_workflow(path), invocation_config)
         callback = callback_for(trace)  # type: ignore[arg-type]
         if callback:
             invocation_config["callbacks"] = [callback]

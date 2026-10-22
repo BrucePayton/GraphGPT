@@ -35,7 +35,7 @@ def test_cli_validate_inspect_schema_export_and_doctor(tmp_path: Path) -> None:
 
     doctor = runner.invoke(app, ["doctor"])
     assert doctor.exit_code == 0
-    assert "GraphGPT 0.9.0" in doctor.stdout
+    assert "GraphGPT 0.10.0" in doctor.stdout
     assert "plugin API: graphgpt.dev/plugin/v1alpha1" in doctor.stdout
     assert "conversion formats: universal, graphgpt, mcp, skill, langgraph, dify, n8n" in (
         doctor.stdout
@@ -92,7 +92,7 @@ def test_cli_run_stream_export_files_and_version(tmp_path: Path) -> None:
 
     version = runner.invoke(app, ["--version"])
     assert version.exit_code == 0
-    assert version.stdout.strip() == "0.9.0"
+    assert version.stdout.strip() == "0.10.0"
 
 
 def test_cli_passes_standard_runnable_config_to_nodes(tmp_path: Path) -> None:
@@ -142,11 +142,13 @@ def test_cli_builds_resume_command_with_thread_config(
             return {"resumed": True}
 
     monkeypatch.setattr("graphgpt.cli.compile_workflow", lambda _: Graph())
+    monkeypatch.setattr("graphgpt.cli.inspect_workflow", lambda _: object())
+    monkeypatch.setattr("graphgpt.cli.merge_trace_config", lambda _graph, config: config)
     monkeypatch.setattr(
         "graphgpt.cli.prepare_runtime_input",
-        lambda _path, value: Command(resume=value.value)
-        if getattr(value, "kind", None) == "resume"
-        else None,
+        lambda _path, value: (
+            Command(resume=value.value) if getattr(value, "kind", None) == "resume" else None
+        ),
     )
     result = runner.invoke(
         app,
