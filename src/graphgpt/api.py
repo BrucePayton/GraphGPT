@@ -26,6 +26,7 @@ from graphgpt.domain.ir import GraphIR
 from graphgpt.dsl.models import WorkflowDocument
 from graphgpt.registry import BindingRegistry
 from graphgpt.runtime import RuntimeCommand, StateInput, adapt_runtime_input
+from graphgpt.tracing import merge_trace_config
 
 
 def load_workflow(path: str | Path) -> WorkflowDocument:
@@ -72,9 +73,10 @@ def invoke_workflow(
     bindings: dict[str, Any] | None = None,
 ) -> Any:
     """Compile and invoke through the strict public runtime-input contract."""
-    payload = prepare_runtime_input(path, value)
+    graph_ir = inspect_workflow(path)
+    payload = adapt_runtime_input(graph_ir, value)
     graph = compile_workflow(path, registry=registry, bindings=bindings)
-    return graph.invoke(payload, config=config)
+    return graph.invoke(payload, config=merge_trace_config(graph_ir, config))
 
 
 def render_ecosystem_bundle(

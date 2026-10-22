@@ -6,6 +6,7 @@ from typing import Annotated, Any, NotRequired, Required, TypedDict, cast
 
 from graphgpt.application.ports import BindingResolver
 from graphgpt.domain.ir import GraphIR
+from graphgpt.tracing import trace_metadata
 
 _DEFAULT_CHECKPOINTER = object()
 
@@ -42,7 +43,7 @@ class LangGraphCompiler:
             builder.add_node(
                 node.id,
                 action,
-                metadata=node.metadata or None,
+                metadata={**node.metadata, **trace_metadata(graph, node_id=node.id)},
                 retry_policy=(
                     RetryPolicy(
                         initial_interval=node.retry.initial_interval,

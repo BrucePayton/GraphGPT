@@ -8,7 +8,7 @@
 GraphGPT 是一个 Python 优先、面向 LangGraph 1.x / LangChain 1.x 的声明式状态图编译器。
 它把版本化 YAML 编译为原生 `StateGraph` / `CompiledStateGraph`，不引入第二套运行时。
 
-> 当前版本：v0.9.0。GraphGPT 支持循环、条件路由和持久化，因此它并不把图限制为 DAG。
+> 当前版本：v0.10.1。GraphGPT 支持循环、条件路由和持久化，因此它并不把图限制为 DAG。
 
 ## 核心能力
 
@@ -37,7 +37,7 @@ uv run graphgpt run workflow.yaml --input '{"approved": true}'
 ```
 
 若要使用 `graphgpt dev` 的官方 CLI 委托，可在生成的项目中执行
-`uv add "graphgpt-builder[cli]>=0.9,<0.10"`。Langfuse 追踪同理使用 `langfuse` extra，
+`uv add "graphgpt-builder[cli]>=0.10,<0.11"`。Langfuse 追踪同理使用 `langfuse` extra，
 LangSmith SDK 已随核心 LangGraph 生态安装并通过标准环境变量启用。
 
 在 Python 中也可以只采用编译器核心：
@@ -51,6 +51,19 @@ print(invoke_workflow("workflow.yaml", StateInput({}), registry=registry))
 
 `StateInput` 与 `RuntimeCommand` 是显式的信任边界：普通 JSON 只能作为已声明状态字段，不能
 伪装成 resume / goto / update 等控制指令。需要原生高级 API 时仍可使用 `compile_workflow`。
+
+通过 LangChain 官方 MCP Adapter 发现并注册远程或进程内工具：
+
+```python
+from graphgpt import BindingRegistry
+
+registry = BindingRegistry()
+references = await registry.add_mcp_tools("https://example.com/mcp", namespace="remote")
+# references 可直接用于 langchain:agent / langgraph:tool-node 的 with.tools
+```
+
+安装时使用 `pip install "graphgpt-builder[mcp]"`。MCP 输入 Schema、输出内容块和服务器来源
+metadata 均由官方适配器保留；空工具集、重复名称和 Registry 覆盖会明确失败。
 
 ## 插件生态
 
@@ -168,6 +181,9 @@ LangGraph 编译器，LangSmith 和 Langfuse 也只是外层观测适配器。�
 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) 和
 [`docs/RESEARCH.md`](docs/RESEARCH.md)。长期路线见
 [`docs/PROJECT_PLAN.md`](docs/PROJECT_PLAN.md)。
+
+每个节点和标准调用都会携带 `graph_id`、内容寻址的 `graph_version`、`node_id` 与
+`generator_version`；LangSmith 开启标准环境变量后即可按这些字段关联 Trace。
 
 ## 开发
 

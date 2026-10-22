@@ -95,6 +95,40 @@ class BindingRegistry:
             return self._resolve_plugin(reference, kind, {})
         return self._resolve(reference)
 
+    def resolve_tool(self, reference: str) -> Any:
+        """Resolve and validate a standard tool reference."""
+        tool = self._resolve(reference)
+        name = _tool_name(tool)
+        if not callable(getattr(tool, "invoke", None)) and not callable(tool):
+            self._fail("BIND-007", reference, f"tool '{name}' is not callable")
+        return tool
+
+    async def add_mcp_tools(
+        self,
+        target: Any,
+        *,
+        namespace: str | None = None,
+        cache_mode: Literal["use", "refresh", "bypass"] = "use",
+    ) -> tuple[str, ...]:
+        """Discover official LangChain MCP tools and register stable references."""
+        from graphgpt.mcp import discover_mcp_tools
+
+        if namespace is not None and (not namespace or ":" in namespace):
+            raise ValueError("MCP namespace must be non-empty and cannot contain ':'")
+        tools = await discover_mcp_tools(
+            target,
+            cache_mode=cache_mode,
+        )
+        pending: dict[str, Any] = {}
+        for tool in tools:
+            tool_name = _tool_name(tool)
+            binding_name = f"{namespace}.{tool_name}" if namespace else tool_name
+            if binding_name in self._bindings or binding_name in pending:
+                raise ValueError(f"refusing to overwrite registered binding '{binding_name}'")
+            pending[binding_name] = tool
+        self._bindings.update(pending)
+        return tuple(f"registry:{name}" for name in pending)
+
     def resolve_ecosystem(self, reference: str, config: dict[str, Any] | None = None) -> Any:
         """Resolve a plugin-provided ecosystem renderer."""
         if not reference.startswith("plugin:"):
@@ -266,7 +300,7 @@ def _make_agent_node(
     model = config.get("model")
     if not isinstance(model, str):
         raise ValueError("langchain:agent requires with.model")
-    tools = [registry._resolve(str(item)) for item in config.get("tools", [])]
+    tools = [registry.resolve_tool(str(item)) for item in config.get("tools", [])]
     middleware: list[Any] = []
     if approval is not None:
         tool_names = {_tool_name(tool) for tool in tools}
@@ -318,7 +352,7 @@ def _tool_name(tool: Any) -> str:
 def _make_tool_node(config: dict[str, Any], registry: BindingRegistry) -> Any:
     from langgraph.prebuilt import ToolNode
 
-    tools = [registry._resolve(str(item)) for item in config.get("tools", [])]
+    tools = [registry.resolve_tool(str(item)) for item in config.get("tools", [])]
     return ToolNode(tools)
 
 

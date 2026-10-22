@@ -528,7 +528,7 @@ YAML 工作流和插件本质上会触发代码导入与外部调用，安全不
 - [x] **GraphGPT-001 / P0** 建立 Python 3.11+ `uv` 项目、CI 和质量工具；验收：本地与 CI 可运行 lint、typecheck、test、build。
 - [x] **GraphGPT-002 / P0** 验证 LangGraph 1.2.x 的基础图、循环、条件边和 Reducer；验收：形成可执行 spike 与记录。
 - [~] **GraphGPT-003 / P0** 验证 LangChain model/tool/create_agent 的嵌入方式；验收：工具循环可 invoke/stream。
-- [~] **GraphGPT-004 / P0** 验证 checkpointer、interrupt、resume 和 thread ID；验收：进程内恢复用例通过且副作用次数正确。
+- [x] **GraphGPT-004 / P0** 验证 checkpointer、interrupt、resume 和 thread ID；验收：进程内恢复用例通过且副作用次数正确。
 - [x] **GraphGPT-005 / P0** 验证 `langgraph.json`、`langgraph dev` 与 Studio 装载；验收：示例图在 Agent Server 可调用。
 - [x] **GraphGPT-006 / P0** 形成兼容矩阵和 `compat/` 策略；依赖：GraphGPT-002～005。
 - [x] **GraphGPT-007 / P0** 编写 ADR-001、ADR-002 和初版威胁模型。
@@ -549,16 +549,17 @@ YAML 工作流和插件本质上会触发代码导入与外部调用，安全不
 ### 12.3 M2 — LangChain 与开发工具链
 
 - [~] **GraphGPT-201 / P0** 实现 LangChain model factory，敏感配置只接受引用。
-- [~] **GraphGPT-202 / P0** 实现 `BaseTool`、`@tool` 和 ToolNode 适配及契约测试。
-- [ ] **GraphGPT-203 / P0** 实现 `Command` 与声明目标校验。
-- [ ] **GraphGPT-204 / P0** 实现 `Send` fan-out 和聚合 Reducer 校验。
-- [~] **GraphGPT-205 / P0** 透传 sync/async invoke、stream、RunnableConfig、tags 和 metadata。
-- [~] **GraphGPT-206 / P0** 实现 checkpointer、store、interrupt 与 server-managed 模式。
+- [x] **GraphGPT-202 / P0** 实现 `BaseTool`、`@tool` 和 ToolNode 适配及契约测试。
+- [x] **GraphGPT-203 / P0** 实现 `Command` 与声明目标校验。
+- [x] **GraphGPT-204 / P0** 实现 `Send` fan-out 和聚合 Reducer 校验。
+- [x] **GraphGPT-205 / P0** 透传 sync/async invoke、stream、RunnableConfig、tags 和 metadata。
+- [x] **GraphGPT-206 / P0** 实现 checkpointer、store、interrupt 与 server-managed 模式。
 - [x] **GraphGPT-207 / P0** 生成可导入 graph module 与标准 `langgraph.json`。
 - [x] **GraphGPT-208 / P1** 实现 `init`、`dev`、`doctor`。
 - [x] **GraphGPT-209 / P1** 提供 Tool-use、RAG 模板；RAG provider 作为 optional extra。
-- [~] **GraphGPT-210 / P0** 增加 Agent Server/Studio 端到端测试。
+- [x] **GraphGPT-210 / P0** 增加 Agent Server/Studio 端到端测试。
 - [~] **GraphGPT-211 / P0** 增加日志脱敏、secret 扫描和恶意 YAML 测试。
+- [x] **GraphGPT-212 / P1** 通过 LangChain `MCPAdapter` 发现、校验并注册 MCP 工具。
 
 ### 12.4 M3 — 插件、子图与发布准备
 
