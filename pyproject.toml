@@ -32,7 +32,7 @@ langchain = ["langchain>=1.4.6,<2.0"]
 mcp = ["langchain[mcp]>=1.4.6,<2.0"]
 cli = ["langgraph-cli[inmem]>=0.4.36,<1.0"]
 langsmith = ["langsmith>=0.4,<1.0"]
-langfuse = ["langfuse>=3.0,<4.0"]
+langfuse = ["langfuse>=3.0,<6.0"]
 dev = [
   "hatchling>=1.27",
   "mypy>=1.15",
