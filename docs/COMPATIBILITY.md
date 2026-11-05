@@ -22,7 +22,8 @@ Runtime Conformance Suite 对比手写原生图与生成图，覆盖首次执行
 Typed Decision、Action、异步任务与评估边界见 [Typed workflows](TYPED_WORKFLOWS.md)。
 
 GraphGPT 仅从集中适配器使用 LangGraph 公共 API。LangChain HITL 的 `per_call` 模式需要
-1.4.6 或更高版本；审批恢复必须启用 checkpointer。Langfuse 3.x 是可选依赖，插件协议独立
+1.4.6 或更高版本；审批恢复必须启用 checkpointer。Langfuse SDK >=4.7,<5 是可选依赖，
+评估使用 Observations v2（Cloud / 自托管 v4+）；插件协议独立
 版本为 `graphgpt.dev/plugin/v1alpha1`。
 
 首方 MCP 运行时适配通过 `graphgpt-builder[mcp]` 安装，使用

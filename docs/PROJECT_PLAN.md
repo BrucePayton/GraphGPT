@@ -11,7 +11,7 @@
 Runtime error handler/Delta 快照策略，以及进程内 Async Task 和 Evaluation Manifest。
 完成情况与边界见 [实现状态](IMPLEMENTATION_STATUS.md) 和
 [Typed workflows](TYPED_WORKFLOWS.md)。后续工作包括托管异步调度、跨进程恢复、
-OpenAI/Jev 专用响应适配与真实 LangSmith 评估验证。
+OpenAI/Jev 专用响应适配与真实 Langfuse 评估验证。
 
 GraphGPT（下文简称 GraphGPT）拟建设为一个开源、Python 优先的声明式工作流工具：开发者使用 YAML 描述状态、节点、边、路由、子图、持久化和运行策略，GraphGPT 将其解析为稳定的中间表示（IR），完成静态校验，再直接编译为 LangGraph `StateGraph` / `CompiledStateGraph`。
 

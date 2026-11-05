@@ -26,7 +26,7 @@ from graphgpt.domain.conversion import (
     UniversalEdge,
     UniversalNode,
 )
-from graphgpt.evaluation import LangSmithEvaluationAdapter, evaluation_manifest
+from graphgpt.evaluation import LangfuseEvaluationAdapter, evaluation_manifest
 from graphgpt.plugin import (
     PLUGIN_API_VERSION,
     PLUGIN_ENTRY_POINT_GROUP,
@@ -60,7 +60,7 @@ __all__ = [
     "Fidelity",
     "GraphGPTPlugin",
     "InvocationContract",
-    "LangSmithEvaluationAdapter",
+    "LangfuseEvaluationAdapter",
     "PluginCapability",
     "PluginInspection",
     "PluginManifest",

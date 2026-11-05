@@ -440,7 +440,7 @@ requires-dist = [
     { name = "hatchling", marker = "extra == 'dev'", specifier = ">=1.27" },
     { name = "langchain", marker = "extra == 'langchain'", specifier = ">=1.4.6,<2.0" },
     { name = "langchain", extras = ["mcp"], marker = "extra == 'mcp'", specifier = ">=1.4.6,<2.0" },
-    { name = "langfuse", marker = "extra == 'langfuse'", specifier = ">=3.0,<4.0" },
+    { name = "langfuse", marker = "extra == 'langfuse'", specifier = ">=4.7,<5.0" },
     { name = "langgraph", specifier = ">=1.2.18,<2.0" },
     { name = "langgraph-cli", extras = ["inmem"], marker = "extra == 'cli'", specifier = ">=0.4.36,<1.0" },
     { name = "langsmith", marker = "extra == 'langsmith'", specifier = ">=0.4,<1.0" },

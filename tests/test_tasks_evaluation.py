@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import asyncio
+import json
+from datetime import UTC, datetime
 from types import SimpleNamespace
 
 import pytest
@@ -8,7 +10,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import interrupt
 
-from graphgpt import AsyncTaskIR, AsyncTaskRunner, LangSmithEvaluationAdapter, evaluation_manifest
+from graphgpt import AsyncTaskIR, AsyncTaskRunner, LangfuseEvaluationAdapter, evaluation_manifest
 from graphgpt.application.transform import to_ir
 from graphgpt.domain.ir import DecisionIR, EdgeIR, GraphIR, NodeIR
 from graphgpt.dsl.models import WorkflowDocument
@@ -122,42 +124,58 @@ def test_evaluation_stream_and_unknown_checks() -> None:
     assert manifest["compiler_version"]
     calls = []
 
-    def list_runs(**kwargs):
+    def get_many(**kwargs):
         calls.append(kwargs)
+        if kwargs["cursor"] is None:
+            return SimpleNamespace(data=[], meta=SimpleNamespace(cursor="next-page"))
+        observations = []
         for answer in (True, "bad"):
-            yield SimpleNamespace(
-                id=str(answer),
-                name="decide",
-                extra={"metadata": trace_metadata(graph, node_id="decide")},
-                error=None,
-                end_time="now",
-                outputs={"answer": answer},
+            observations.append(
+                SimpleNamespace(
+                    id=str(answer),
+                    trace_id="trace-1",
+                    name="decide",
+                    metadata=json.dumps(trace_metadata(graph, node_id="decide")),
+                    level="DEFAULT",
+                    end_time="now",
+                    output=json.dumps({"answer": answer}),
+                )
             )
-        yield SimpleNamespace(extra={"metadata": {"graph_id": "different"}})
-        yield SimpleNamespace(
-            name="provider", extra={"metadata": trace_metadata(graph, node_id="decide")}
+        observations.append(SimpleNamespace(metadata={"graph_id": "different"}))
+        observations.append(
+            SimpleNamespace(name="provider", metadata=trace_metadata(graph, node_id="decide"))
         )
+        return SimpleNamespace(data=observations, meta=SimpleNamespace(cursor=None))
 
-    adapter = LangSmithEvaluationAdapter(SimpleNamespace(list_runs=list_runs))
-    rows = list(adapter.evaluate(graph, project_name="project", node_id="decide"))
+    adapter = LangfuseEvaluationAdapter(
+        SimpleNamespace(api=SimpleNamespace(observations=SimpleNamespace(get_many=get_many)))
+    )
+    time_range = {
+        "from_start_time": datetime(2026, 11, 1, tzinfo=UTC),
+        "to_start_time": datetime(2026, 11, 5, tzinfo=UTC),
+    }
+    rows = list(adapter.evaluate(graph, **time_range, node_id="decide"))
     assert len(rows) == 8
     assert [r["status"] for r in rows if r["check"] == "typed_decision"] == ["passed", "failed"]
     assert {r["status"] for r in rows if r["check"] == "rejection_has_no_side_effects"} == {
         "not_evaluated"
     }
     assert "graph_version" in calls[0]["filter"] and calls[0]["limit"] == 100
+    assert calls[1]["cursor"] == "next-page"
+    assert rows[0]["trace_id"] == "trace-1"
+    assert rows[0]["observation_id"] == rows[0]["run_id"]
     rows = list(
         adapter.evaluate(
-            graph, project_name="p", evaluators={"rejection_has_no_side_effects": lambda _: False}
+            graph, **time_range, evaluators={"rejection_has_no_side_effects": lambda _: False}
         )
     )
     assert all(
         r["status"] == "failed" for r in rows if r["check"] == "rejection_has_no_side_effects"
     )
     with pytest.raises(ValueError):
-        list(adapter.evaluate(graph, project_name="p", node_id="missing"))
+        list(adapter.evaluate(graph, **time_range, node_id="missing"))
     with pytest.raises(ValueError):
-        list(adapter.evaluate(graph, project_name="p", limit=0))
+        list(adapter.evaluate(graph, **time_range, limit=0))
 
 
 def test_new_ir_roundtrip() -> None:

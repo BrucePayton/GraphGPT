@@ -96,7 +96,7 @@ def inspect_command(path: Path) -> None:
 
 @app.command()
 def evaluation(path: Path) -> None:
-    """Print a deterministic evaluation manifest without contacting LangSmith."""
+    """Print a deterministic evaluation manifest without contacting Langfuse."""
     diagnostics = validate_workflow(path)
     if any(item.severity == Severity.ERROR for item in diagnostics):
         _emit_diagnostics(diagnostics, OutputFormat.HUMAN)

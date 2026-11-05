@@ -11,7 +11,9 @@
   LangGraph >=1.2.18 and test parallel/subgraph recovery and long-thread replay.
 - Add process-local AsyncTaskIR/runner with idempotency, exclusive resources,
   cancellation, timeout, interrupt resume and parent-associated results.
-- Add evaluation manifests, read-only LangSmith SDK evaluation and compiler trace identity.
+- Add evaluation manifests, read-only Langfuse Observations v2 evaluation and compiler trace identity.
+- Use Langfuse SDK >=4.7,<5 for the optional tracing/evaluation extra, with bounded time
+  filters, cursor pagination and trace/observation identifiers in evaluation records.
 - Preserve new semantics in universal IR round trips; update schema, CI and examples.
 - Record the still-reproducible upstream #9344 limitation through LangGraph 1.2.20.
 

@@ -104,16 +104,50 @@ uv run graphgpt evaluation examples/typed-decision/workflow.yaml
 ## Evaluation
 
 `evaluation_manifest(inspect_workflow(path))` generates deterministic node-level checks.
-`LangSmithEvaluationAdapter(client).evaluate(graph_ir, project_name="project", node_id=...)`
-iterates SDK `list_runs` results with graph/version/compiler/node metadata filters and
-returns records with `run_id`, check and status. It never writes remote feedback.
+`LangfuseEvaluationAdapter(client).evaluate(...)` reads Observations v2 with
+graph/version/compiler/node metadata filters and cursor pagination. Project selection
+comes from the client's API keys. Provide timezone-aware `from_start_time` and
+`to_start_time` (exclusive) to bound the query. Records include `trace_id`,
+`observation_id`, `run_id` (an alias for observation_id), check and status.
+It never writes remote scores.
+
+Install `graphgpt-builder[langfuse]` (Python SDK >=4.7,<5). The query API requires
+Langfuse Cloud or self-hosted v4+. Existing v3 SDK users must upgrade the extra.
+
+```python
+from datetime import datetime, timedelta, timezone
+from langfuse import get_client
+from langfuse.langchain import CallbackHandler
+from graphgpt import LangfuseEvaluationAdapter, StateInput, inspect_workflow, invoke_workflow
+
+# Configure LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY and LANGFUSE_BASE_URL.
+client = get_client()
+invoke_workflow("workflow.yaml", StateInput({"query": "hello"}),
+                config={"callbacks": [CallbackHandler()]})
+client.flush()
+end = datetime.now(timezone.utc)
+rows = LangfuseEvaluationAdapter(client).evaluate(
+    inspect_workflow("workflow.yaml"),
+    from_start_time=end - timedelta(days=1), to_start_time=end,
+    limit=100, max_pages=100,
+)
+for row in rows:
+    print(row)
+```
+
+The adapter requests metadata and I/O explicitly, parses JSON observation output,
+and follows cursors even on empty pages. `limit` bounds observations scanned, not
+evaluation rows; a node may produce several checks. A repeated cursor or exhausted
+`max_pages` raises an error. Nested provider/hook spans are excluded by node name.
+Langfuse ingestion is eventually consistent: flush confirms delivery, not query
+visibility. An empty result is not evidence that a graph passed evaluation.
 
 Execution and typed-output checks have local implementations. Interrupt correctness
 and absence of side effects require application evaluators; without one they report
 `not_evaluated`, never a fabricated pass. Running traces report `pending` for execution.
-The query contract is tested with a stub SDK client; remote queries need credentials
-and have not been verified. This uses the Python SDK iterator, not the CLI V2 stream API.
+The query contract is tested locally, including the actual SDK with mock HTTP responses;
+remote queries need credentials and have not been verified.
 
 Sources: [LangGraph 1.2.18](https://github.com/langchain-ai/langgraph/releases/tag/1.2.18),
 [typed decision interface inspiration](https://github.com/langchain-ai/langchainjs/pull/11930),
-[LangSmith trace export](https://docs.langchain.com/langsmith/export-traces).
+[Langfuse Public API](https://langfuse.com/docs/api-and-data-platform/features/public-api).

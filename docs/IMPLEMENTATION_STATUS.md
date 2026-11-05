@@ -24,12 +24,12 @@
 | Action Registry / 版本 / Hook | 实现、验证 | `actions.py`, `registry.py` | `test_decisions_actions.py` | 0.11.0 |
 | 异常恢复 / Delta snapshot policy | 实现、验证 | `adapters/langgraph_compiler.py` | `test_runtime_recovery.py` | 0.11.0 |
 | Async Task 生命周期 | 进程内实现、验证；非持久化调度服务 | `tasks.py` | `test_tasks_evaluation.py` | 0.11.0 |
-| Evaluation Manifest / LangSmith SDK 查询 | 本地契约验证；远程未验证 | `evaluation.py` | `test_tasks_evaluation.py` | 0.11.0 |
+| Evaluation Manifest / Langfuse Observations v2 查询 | 本地契约与 SDK HTTP 模拟验证；远程未验证 | `evaluation.py` | `test_tasks_evaluation.py`, `test_langfuse_evaluation.py` | 0.11.0 |
 
 ## 可重复验证
 
 ```bash
-uv sync --extra dev --extra langchain --extra mcp --extra cli --locked
+uv sync --extra dev --extra langchain --extra mcp --extra cli --extra langfuse --locked
 uv run ruff check .
 uv run mypy
 uv run pytest --cov=graphgpt --cov-report=term-missing --cov-fail-under=90

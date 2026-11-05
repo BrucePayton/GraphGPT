@@ -203,6 +203,6 @@ uv build
 ## 0.11 编译器能力更新
 
 新增类型化 Decision、精确版本 Action Registry、节点异常恢复和 DeltaChannel 快照策略。
-同时提供进程内异步任务生命周期及 LangSmith 评估清单/查询适配器。
+同时提供进程内异步任务生命周期及 Langfuse 评估清单/Observation 查询适配器。
 使用方法和验证边界见 [Typed workflows](docs/TYPED_WORKFLOWS.md)，
 可运行示例位于 [examples/typed-decision](examples/typed-decision)。
