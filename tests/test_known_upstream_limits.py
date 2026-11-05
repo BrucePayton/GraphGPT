@@ -16,10 +16,11 @@ class ValuesState(TypedDict, total=False):
 
 
 LANGGRAPH_1_2_16_OR_OLDER = tuple(map(int, version("langgraph").split(".")[:3])) <= (1, 2, 16)
+LANGGRAPH_1_2_20_OR_OLDER = tuple(map(int, version("langgraph").split(".")[:3])) <= (1, 2, 20)
 
 
 @pytest.mark.xfail(
-    LANGGRAPH_1_2_16_OR_OLDER,
+    LANGGRAPH_1_2_20_OR_OLDER,
     reason="upstream langgraph#9344 duplicates Command(update=...) on a new thread",
     strict=False,
 )

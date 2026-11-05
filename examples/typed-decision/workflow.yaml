@@ -1,0 +1,30 @@
+apiVersion: graphgpt.dev/v1alpha1
+kind: Workflow
+metadata:
+  name: typed_review
+spec:
+  state:
+    fields:
+      request: {type: string}
+      approved: {type: boolean}
+      result: {type: string}
+  nodes:
+    decide:
+      decision:
+        provider: registry:decision_provider
+        question: {type: predicate, prompt: "Is this request approved?"}
+        outputKey: approved
+        refusalPolicy: interrupt
+    report:
+      action:
+        ref: approval.report
+        version: "1.0"
+        before: [registry:audit]
+      writes: [result]
+  edges:
+    - {from: $start, to: decide}
+    - {from: decide, to: report}
+    - {from: report, to: $end}
+  runtime:
+    checkpointer: memory
+    deltaSnapshotFrequency: 100

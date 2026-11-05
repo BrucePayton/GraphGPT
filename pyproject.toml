@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "graphgpt-builder"
-version = "0.10.1"
+version = "0.11.0"
 description = "Declarative, extensible compiler from versioned YAML workflows to native LangGraph"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -21,7 +21,7 @@ classifiers = [
   "Typing :: Typed",
 ]
 dependencies = [
-  "langgraph>=1.2.16,<2.0",
+  "langgraph>=1.2.18,<2.0",
   "pydantic>=2.10,<3.0",
   "PyYAML>=6.0,<7.0",
   "typer>=0.15,<1.0",
@@ -32,7 +32,7 @@ langchain = ["langchain>=1.4.6,<2.0"]
 mcp = ["langchain[mcp]>=1.4.6,<2.0"]
 cli = ["langgraph-cli[inmem]>=0.4.36,<1.0"]
 langsmith = ["langsmith>=0.4,<1.0"]
-langfuse = ["langfuse>=3.0,<4.0"]
+langfuse = ["langfuse>=4.7,<5.0"]
 dev = [
   "hatchling>=1.27",
   "mypy>=1.15",
@@ -66,6 +66,7 @@ include = [
   "/examples",
   "/docs",
   "/schemas",
+  "/scripts",
   "/README.md",
   "/CHANGELOG.md",
   "/CODE_OF_CONDUCT.md",

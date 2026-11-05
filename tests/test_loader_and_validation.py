@@ -12,7 +12,7 @@ def test_loads_normalized_ir(tmp_path: Path) -> None:
     graph = inspect_workflow(path)
     assert graph.name == "test_graph"
     assert [node.id for node in graph.nodes] == ["step"]
-    assert graph.ir_version == "0.4"
+    assert graph.ir_version == "0.5"
     assert "source_map" not in graph.to_dict()
     assert validate_workflow(path) == []
 
@@ -67,7 +67,7 @@ def test_node_requires_exactly_one_action(tmp_path: Path, node: str) -> None:
     path = tmp_path / "workflow.yaml"
     path.write_text(WORKFLOW.replace("step: {use: registry:step}", node), encoding="utf-8")
 
-    with pytest.raises(GraphGPTError, match="exactly one of 'use' or 'subgraph'"):
+    with pytest.raises(GraphGPTError, match="exactly one of use, subgraph, decision, action"):
         inspect_workflow(path)
 
 

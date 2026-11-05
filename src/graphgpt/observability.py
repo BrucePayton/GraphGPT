@@ -14,3 +14,9 @@ def callback_for(provider: Literal["langsmith", "langfuse", "none"]) -> Any | No
     except ImportError as exc:
         raise RuntimeError("Install GraphGPT with the 'langfuse' extra") from exc
     return callback_handler()
+
+
+def flush_tracing(provider: str) -> None:
+    """Drain queued Langfuse observations before a short-lived CLI process exits."""
+    if provider == "langfuse":
+        import_module("langfuse").get_client().flush()

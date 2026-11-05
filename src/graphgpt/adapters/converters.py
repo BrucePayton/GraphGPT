@@ -811,6 +811,13 @@ def _graph_ir_to_dsl(graph: dict[str, Any]) -> dict[str, Any]:
             body["use"] = node["use"]
         elif node.get("subgraph"):
             body["subgraph"] = node["subgraph"]
+        elif node.get("decision"):
+            body["decision"] = node["decision"]
+        elif node.get("action"):
+            body["action"] = node["action"]
+        for key in ("approval", "error_handler"):
+            if node.get(key):
+                body[key] = node[key]
         if node.get("config"):
             body["with"] = node["config"]
         if node.get("metadata"):
@@ -846,6 +853,7 @@ def _graph_ir_to_dsl(graph: dict[str, Any]) -> dict[str, Any]:
             "runtime": {
                 "interruptBefore": runtime.get("interrupt_before", []),
                 "interruptAfter": runtime.get("interrupt_after", []),
+                "deltaSnapshotFrequency": runtime.get("delta_snapshot_frequency", 100),
                 **(
                     {"checkpointer": runtime["checkpointer"]} if runtime.get("checkpointer") else {}
                 ),

@@ -23,7 +23,7 @@ def test_cli_validate_inspect_schema_export_and_doctor(tmp_path: Path) -> None:
 
     inspected = runner.invoke(app, ["inspect", str(workflow)])
     assert inspected.exit_code == 0
-    assert '"ir_version": "0.4"' in inspected.stdout
+    assert '"ir_version": "0.5"' in inspected.stdout
 
     schema = runner.invoke(app, ["schema"])
     assert schema.exit_code == 0
@@ -35,7 +35,7 @@ def test_cli_validate_inspect_schema_export_and_doctor(tmp_path: Path) -> None:
 
     doctor = runner.invoke(app, ["doctor"])
     assert doctor.exit_code == 0
-    assert "GraphGPT 0.10.1" in doctor.stdout
+    assert "GraphGPT 0.11.0" in doctor.stdout
     assert "plugin API: graphgpt.dev/plugin/v1alpha1" in doctor.stdout
     assert "conversion formats: universal, graphgpt, mcp, skill, langgraph, dify, n8n" in (
         doctor.stdout
@@ -92,7 +92,7 @@ def test_cli_run_stream_export_files_and_version(tmp_path: Path) -> None:
 
     version = runner.invoke(app, ["--version"])
     assert version.exit_code == 0
-    assert version.stdout.strip() == "0.10.1"
+    assert version.stdout.strip() == "0.11.0"
 
 
 def test_cli_passes_standard_runnable_config_to_nodes(tmp_path: Path) -> None:

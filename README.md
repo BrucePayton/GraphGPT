@@ -8,7 +8,7 @@
 GraphGPT 是一个 Python 优先、面向 LangGraph 1.x / LangChain 1.x 的声明式状态图编译器。
 它把版本化 YAML 编译为原生 `StateGraph` / `CompiledStateGraph`，不引入第二套运行时。
 
-> 当前版本：v0.10.1。GraphGPT 支持循环、条件路由和持久化，因此它并不把图限制为 DAG。
+> 已发布版本：v0.10.1；本分支为待发布的 v0.11.0。GraphGPT 支持循环、条件路由和持久化，因此它并不把图限制为 DAG。
 
 ## 核心能力
 
@@ -22,7 +22,7 @@ GraphGPT 是一个 Python 优先、面向 LangGraph 1.x / LangChain 1.x 的声�
 - 环境变量 Secret 引用、诊断脱敏，以及精确到 YAML 文件/行/列的 SourceMap；
 - `validate`、`inspect`、`run`、`init`、`export`、`schema`、`doctor`、`dev` CLI；
 - 标准 `langgraph.json` 生成，适配 LangGraph CLI、Agent Server 与 LangSmith Studio；
-- LangSmith 环境变量透传，以及可选 Langfuse callback；
+- Langfuse callback、版本化节点追踪和 Observations v2 评估；保留 LangSmith 环境变量兼容；
 - Chat、Branch、Loop、Tool-use、RAG 五个离线可运行模板。
 
 ## 快速开始
@@ -37,7 +37,7 @@ uv run graphgpt run workflow.yaml --input '{"approved": true}'
 ```
 
 若要使用 `graphgpt dev` 的官方 CLI 委托，可在生成的项目中执行
-`uv add "graphgpt-builder[cli]>=0.10,<0.11"`。Langfuse 追踪同理使用 `langfuse` extra，
+`uv add "graphgpt-builder[cli]>=0.10,<0.11"`（0.11 发布后可升级）。Langfuse 追踪同理使用 `langfuse` extra，
 LangSmith SDK 已随核心 LangGraph 生态安装并通过标准环境变量启用。
 
 在 Python 中也可以只采用编译器核心：
@@ -183,7 +183,9 @@ LangGraph 编译器，LangSmith 和 Langfuse 也只是外层观测适配器。�
 [`docs/PROJECT_PLAN.md`](docs/PROJECT_PLAN.md)。
 
 每个节点和标准调用都会携带 `graph_id`、内容寻址的 `graph_version`、`node_id` 与
-`generator_version`；LangSmith 开启标准环境变量后即可按这些字段关联 Trace。
+`generator_version`、`compiler_version`；Langfuse 可按这些字段查询节点观测与评估。
+本地真实服务验证、凭据配置和重跑步骤见 [本地 Langfuse](docs/LOCAL_LANGFUSE.md)。
+历史周报逐项适配结论及未支持边界见 [生态适配审计](docs/ECOSYSTEM_AUDIT.md)。
 
 ## 开发
 
@@ -199,3 +201,10 @@ uv build
 [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)。
 
 许可证：Apache-2.0。
+
+## 0.11 编译器能力更新
+
+新增类型化 Decision、精确版本 Action Registry、节点异常恢复和 DeltaChannel 快照策略。
+同时提供进程内异步任务生命周期及 Langfuse 评估清单/Observation 查询适配器。
+使用方法和验证边界见 [Typed workflows](docs/TYPED_WORKFLOWS.md)，
+可运行示例位于 [examples/typed-decision](examples/typed-decision)。
