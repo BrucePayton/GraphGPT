@@ -304,9 +304,10 @@ class BindingRegistry:
         )
 
 
-def _make_model_node(config: dict[str, Any]) -> Callable[[dict[str, Any]], dict[str, Any]]:
+def _make_model_node(config: dict[str, Any]) -> Any:
     try:
         from langchain.chat_models import init_chat_model
+        from langchain_core.runnables import RunnableConfig, RunnableLambda
     except ImportError as exc:
         raise RuntimeError("Install GraphGPT with the 'langchain' extra") from exc
     model_name = config.get("model")
@@ -317,10 +318,13 @@ def _make_model_node(config: dict[str, Any]) -> Callable[[dict[str, Any]], dict[
     input_key = str(config.get("inputKey", "messages"))
     output_key = str(config.get("outputKey", "messages"))
 
-    def invoke(state: dict[str, Any]) -> dict[str, Any]:
-        return {output_key: [model.invoke(state[input_key])]}
+    def invoke(state: dict[str, Any], config: RunnableConfig) -> dict[str, Any]:
+        return {output_key: [model.invoke(state[input_key], config=config)]}
 
-    return invoke
+    async def ainvoke(state: dict[str, Any], config: RunnableConfig) -> dict[str, Any]:
+        return {output_key: [await model.ainvoke(state[input_key], config=config)]}
+
+    return RunnableLambda(invoke, afunc=ainvoke)
 
 
 def _make_agent_node(

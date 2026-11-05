@@ -2,7 +2,19 @@
 
 ## Unreleased
 
-## 0.11.0 - 2026-11-05
+## 0.11.0 - Unreleased
+
+### Added
+
+- Add isolated local Langfuse bootstrap and real trace/query/evaluation verification scripts.
+- Audit five historical ecosystem reports against implementation and test evidence.
+
+### Fixed
+
+- Preserve RunnableConfig and native async model execution in `langchain:model` nodes.
+- Flush Langfuse observations on CLI completion and runtime failure.
+
+### Changed
 
 - Add provider-independent typed decision IR with strict predicate/choice/score outputs,
   explicit refusal fallback/error/interrupt policies and synchronous/asynchronous adapters.

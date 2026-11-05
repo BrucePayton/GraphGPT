@@ -29,3 +29,9 @@ GraphGPT 仅从集中适配器使用 LangGraph 公共 API。LangChain HITL 的 `
 首方 MCP 运行时适配通过 `graphgpt-builder[mcp]` 安装，使用
 `langchain.mcp.MCPAdapter`。该命名空间当前仍是 LangChain beta API；远程 HTTP、stdio
 和进程内服务由 FastMCP 传输层处理，GraphGPT 负责工具发现、名称冲突检查与 Registry 注册。
+
+模型节点已验证原生 async 调用、RunnableConfig/callback 传递与 `astream_events(version="v2")`
+文本增量事件，不将事件快照与 delta 自行混合归并。当前锁定 Core 仍为 1.6.13；
+周报提出的 Core 1.7 / JS 流式协议不等于已验证支持，见 [适配审计](ECOSYSTEM_AUDIT.md)。
+Langfuse 本地接入已完成真实 Trace → Observations v2 → 节点评估闭环，见
+[运行步骤与验收边界](LOCAL_LANGFUSE.md)。

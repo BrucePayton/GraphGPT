@@ -62,6 +62,7 @@ jobs:
             tests/test_decisions_actions.py \
             tests/test_tasks_evaluation.py \
             tests/test_langfuse_evaluation.py \
+            tests/test_model_runtime.py \
             tests/test_mcp.py \
             tests/test_tracing.py \
             tests/test_langgraph_cli_integration.py

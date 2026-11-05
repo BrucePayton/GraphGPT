@@ -7,6 +7,9 @@
 
 ## 1. 执行摘要
 
+本轮历史周报适配复核见 [生态审计](ECOSYSTEM_AUDIT.md)：区分已验证能力与研究型路线，
+修复 model async/config 传递和 CLI Trace flush；已完成 [本地 Langfuse 真实接入](LOCAL_LANGFUSE.md)。
+
 2026-11-05 增量：0.11 实现 Typed Decision、Action Registry/精确版本/Hook、
 Runtime error handler/Delta 快照策略，以及进程内 Async Task 和 Evaluation Manifest。
 完成情况与边界见 [实现状态](IMPLEMENTATION_STATUS.md) 和

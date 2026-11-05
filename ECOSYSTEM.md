@@ -11,12 +11,15 @@ available without a second runtime.
 | LangGraph CLI / Agent Server / Studio | Generated `langgraph.json` | `graphgpt dev` |
 | LangChain 1.x | Models, agents, tools, Runnable nodes | `graphgpt-builder[langchain]` |
 | LangSmith | Standard tracing environment and callbacks | `--trace langsmith` |
-| Langfuse 3.x | Optional LangChain callback adapter | `graphgpt-builder[langfuse]` |
+| Langfuse SDK 4.7+ / server 4+ | Callback + Observations v2 evaluation, local E2E verified | `graphgpt-builder[langfuse]` |
 | Dify | OpenAPI Custom Tool export | `graphgpt ecosystem export --target dify` |
 | n8n | Importable callable sub-workflow | `graphgpt ecosystem export --target n8n` |
 | Third-party extensions | Versioned Python entry points | `graphgpt.plugins` |
 
 ## Agent framework adapters
+
+See [the historical ecosystem audit](docs/ECOSYSTEM_AUDIT.md) for supported boundaries
+and [local Langfuse setup](docs/LOCAL_LANGFUSE.md) for a reproducible trace-to-evaluation check.
 
 Every export includes the versioned `graphgpt.dev/ecosystem/v1alpha1` invocation contract. Built-in
 renderers translate that contract, not GraphIR execution semantics, into framework-native assets.

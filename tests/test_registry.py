@@ -72,7 +72,7 @@ def test_builds_model_agent_tool_node_and_memory_runtimes(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     class Model:
-        def invoke(self, messages: object) -> str:
+        def invoke(self, messages: object, config: object = None) -> str:
             return f"reply:{messages}"
 
     model_calls: list[tuple[str, dict[str, object]]] = []
@@ -109,7 +109,7 @@ def test_builds_model_agent_tool_node_and_memory_runtimes(
             "outputKey": "output",
         },
     )
-    assert model_node({"input": "hello"}) == {"output": ["reply:hello"]}
+    assert model_node.invoke({"input": "hello"}) == {"output": ["reply:hello"]}
     assert model_calls == [("provider:model", {"temperature": 0})]
 
     resolved_agent = registry.resolve_node(

@@ -30,7 +30,7 @@ from graphgpt.domain.conversion import Fidelity
 from graphgpt.domain.diagnostics import GraphGPTError, Severity
 from graphgpt.dsl.models import WorkflowDocument
 from graphgpt.evaluation import evaluation_manifest
-from graphgpt.observability import callback_for
+from graphgpt.observability import callback_for, flush_tracing
 from graphgpt.plugin import PLUGIN_API_VERSION, inspect_installed_plugins
 from graphgpt.project import TEMPLATES, initialize_plugin, initialize_project, to_mermaid
 from graphgpt.runtime import RuntimeCommand, StateInput
@@ -160,12 +160,15 @@ def run(
         callback = callback_for(trace)  # type: ignore[arg-type]
         if callback:
             invocation_config["callbacks"] = [callback]
-        if stream:
-            for event in graph.stream(payload, config=invocation_config or None):
-                typer.echo(json.dumps(event, default=str, sort_keys=True))
-        else:
-            result = graph.invoke(payload, config=invocation_config or None)
-            typer.echo(json.dumps(result, default=str))
+        try:
+            if stream:
+                for event in graph.stream(payload, config=invocation_config or None):
+                    typer.echo(json.dumps(event, default=str, sort_keys=True))
+            else:
+                result = graph.invoke(payload, config=invocation_config or None)
+                typer.echo(json.dumps(result, default=str))
+        finally:
+            flush_tracing(trace)
     except (GraphGPTError, json.JSONDecodeError, RuntimeError, ValueError) as exc:
         typer.echo(str(exc), err=True)
         raise typer.Exit(1) from exc
