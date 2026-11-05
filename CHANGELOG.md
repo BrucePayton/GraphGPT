@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## 0.11.0 - 2026-11-05
+
+- Add provider-independent typed decision IR with strict predicate/choice/score outputs,
+  explicit refusal fallback/error/interrupt policies and synchronous/asynchronous adapters.
+- Add exact-version Action Registry, typed state contracts and ordered observer hooks.
+- Add native node error handlers and explicit DeltaChannel snapshot policy; require
+  LangGraph >=1.2.18 and test parallel/subgraph recovery and long-thread replay.
+- Add process-local AsyncTaskIR/runner with idempotency, exclusive resources,
+  cancellation, timeout, interrupt resume and parent-associated results.
+- Add evaluation manifests, read-only LangSmith SDK evaluation and compiler trace identity.
+- Preserve new semantics in universal IR round trips; update schema, CI and examples.
+- Record the still-reproducible upstream #9344 limitation through LangGraph 1.2.20.
+
 ## 0.10.1 - 2026-10-21
 
 - 修复标准 CI 未安装 `mcp` extra，导致 MCP 契约测试无法收集的问题。

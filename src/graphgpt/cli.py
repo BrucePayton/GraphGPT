@@ -29,6 +29,7 @@ from graphgpt.application.secrets import redact_secrets
 from graphgpt.domain.conversion import Fidelity
 from graphgpt.domain.diagnostics import GraphGPTError, Severity
 from graphgpt.dsl.models import WorkflowDocument
+from graphgpt.evaluation import evaluation_manifest
 from graphgpt.observability import callback_for
 from graphgpt.plugin import PLUGIN_API_VERSION, inspect_installed_plugins
 from graphgpt.project import TEMPLATES, initialize_plugin, initialize_project, to_mermaid
@@ -91,6 +92,16 @@ def inspect_command(path: Path) -> None:
     except GraphGPTError as exc:
         _emit_diagnostics(exc.diagnostics, OutputFormat.HUMAN)
         raise typer.Exit(1) from exc
+
+
+@app.command()
+def evaluation(path: Path) -> None:
+    """Print a deterministic evaluation manifest without contacting LangSmith."""
+    diagnostics = validate_workflow(path)
+    if any(item.severity == Severity.ERROR for item in diagnostics):
+        _emit_diagnostics(diagnostics, OutputFormat.HUMAN)
+        raise typer.Exit(1)
+    typer.echo(json.dumps(evaluation_manifest(inspect_workflow(path)), indent=2, sort_keys=True))
 
 
 @app.command()

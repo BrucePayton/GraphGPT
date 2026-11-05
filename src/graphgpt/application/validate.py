@@ -24,6 +24,39 @@ def validate_ir(graph: GraphIR) -> list[Diagnostic]:
 
     for node_ir in graph.nodes:
         node_path = f"spec.nodes.{node_ir.id}"
+        if node_ir.decision:
+            from graphgpt.decisions import validate_answer
+
+            decision = node_ir.decision
+            field = next((f for f in graph.state_fields if f.name == decision.output_key), None)
+            expected_types = {
+                "predicate": {"bool", "boolean"},
+                "choice": {"str", "string"},
+                "score": {"number", "float"},
+            }
+            if field is None or field.type not in expected_types[decision.question["type"]]:
+                diagnostics.append(
+                    _error(
+                        "DECISION-001",
+                        node_path + ".decision.outputKey",
+                        "decision output requires a matching typed state field",
+                    )
+                )
+            if decision.refusal_policy == "interrupt" and not graph.runtime.checkpointer:
+                diagnostics.append(
+                    _error(
+                        "DECISION-002",
+                        node_path + ".decision.refusalPolicy",
+                        "interrupt refusal policy requires a checkpointer",
+                    )
+                )
+            if decision.refusal_policy == "fallback":
+                try:
+                    validate_answer(decision, decision.fallback)
+                except ValueError as exc:
+                    diagnostics.append(
+                        _error("DECISION-003", node_path + ".decision.fallback", str(exc))
+                    )
         diagnostics.extend(validate_secret_config(node_ir.config, node_path + ".with"))
         if node_ir.approval and node_ir.use != "langchain:agent":
             diagnostics.append(
@@ -104,6 +137,10 @@ def validate_ir(graph: GraphIR) -> list[Diagnostic]:
 
     for state_field in graph.state_fields:
         path = f"spec.state.fields.{state_field.name}"
+        if state_field.reducer == "delta-add" and state_field.type != "array":
+            diagnostics.append(
+                _error("STATE-004", path + ".reducer", "delta-add requires an array state field")
+            )
         if state_field.type not in BUILTIN_STATE_TYPES:
             diagnostics.append(
                 _error(

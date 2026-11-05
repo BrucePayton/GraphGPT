@@ -9,9 +9,11 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Literal, NoReturn, cast
 
+from graphgpt.actions import ActionDefinition, make_action_node
 from graphgpt.application.secrets import resolve_environment_refs, validate_secret_config
+from graphgpt.decisions import make_decision_node
 from graphgpt.domain.diagnostics import Diagnostic, GraphGPTError, Severity
-from graphgpt.domain.ir import ApprovalPolicyIR
+from graphgpt.domain.ir import ActionRefIR, ApprovalPolicyIR, DecisionIR, GraphIR
 from graphgpt.plugin import (
     LEGACY_NODE_ENTRY_POINT_GROUP,
     PLUGIN_ENTRY_POINT_GROUP,
@@ -33,6 +35,7 @@ class BindingRegistry:
         discover_plugins: bool = True,
     ) -> None:
         self._bindings = dict(bindings or {})
+        self._actions: dict[tuple[str, str], ActionDefinition] = {}
         self._allowed_modules = allowed_modules
         self._search_path = search_path.resolve() if search_path else None
         self._legacy_plugins: dict[str, Any] = {}
@@ -43,6 +46,38 @@ class BindingRegistry:
                 self._legacy_plugins.setdefault(point.name, point)
             for point in entry_points(group=PLUGIN_ENTRY_POINT_GROUP):
                 self._plugin_points.setdefault(point.name, []).append(point)
+
+    def register_action(self, name: str, version: str, definition: ActionDefinition) -> None:
+        if not name or not version or (name, version) in self._actions:
+            raise ValueError("action name/version must be non-empty and unique")
+        if not callable(definition.handler) and not hasattr(definition.handler, "invoke"):
+            raise ValueError("action handler must be callable or Runnable")
+        self._actions[name, version] = definition
+
+    def resolve_decision(self, decision: DecisionIR) -> Any:
+        return make_decision_node(decision, self.resolve_node(decision.provider, {}))
+
+    def resolve_action(self, reference: ActionRefIR, graph: GraphIR) -> Any:
+        definition = self._actions.get((reference.ref, reference.version))
+        if definition is None:
+            self._fail("ACTION-001", reference.ref, f"unknown action/version {reference.version}")
+        from graphgpt.application.ecosystem import build_invocation_contract
+
+        properties = build_invocation_contract(graph, base_url="http://localhost").input_schema[
+            "properties"
+        ]
+        for schema in (definition.input_schema, definition.output_schema):
+            for name, field in schema.model_json_schema().get("properties", {}).items():
+                if name not in properties or (
+                    properties[name].get("type") is not None
+                    and field.get("type") != properties[name]["type"]
+                ):
+                    self._fail("ACTION-002", reference.ref, f"incompatible state field '{name}'")
+        return make_action_node(
+            definition,
+            [self.resolve_node(hook, {}) for hook in reference.before],
+            [self.resolve_node(hook, {}) for hook in reference.after],
+        )
 
     def resolve_node(
         self,

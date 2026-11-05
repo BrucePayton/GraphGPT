@@ -1,5 +1,40 @@
 {
   "$defs": {
+    "ActionRefModel": {
+      "additionalProperties": false,
+      "properties": {
+        "after": {
+          "items": {
+            "type": "string"
+          },
+          "title": "After",
+          "type": "array"
+        },
+        "before": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Before",
+          "type": "array"
+        },
+        "ref": {
+          "minLength": 1,
+          "title": "Ref",
+          "type": "string"
+        },
+        "version": {
+          "minLength": 1,
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "ref",
+        "version"
+      ],
+      "title": "ActionRefModel",
+      "type": "object"
+    },
     "ApprovalPolicyModel": {
       "additionalProperties": false,
       "properties": {
@@ -83,6 +118,94 @@
       "title": "CachePolicyModel",
       "type": "object"
     },
+    "ChoiceQuestion": {
+      "additionalProperties": false,
+      "properties": {
+        "options": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Options",
+          "type": "array"
+        },
+        "prompt": {
+          "minLength": 1,
+          "title": "Prompt",
+          "type": "string"
+        },
+        "type": {
+          "const": "choice",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "prompt",
+        "options"
+      ],
+      "title": "ChoiceQuestion",
+      "type": "object"
+    },
+    "DecisionModel": {
+      "additionalProperties": false,
+      "properties": {
+        "fallback": {
+          "default": null,
+          "title": "Fallback"
+        },
+        "outputKey": {
+          "minLength": 1,
+          "title": "Outputkey",
+          "type": "string"
+        },
+        "provider": {
+          "minLength": 1,
+          "title": "Provider",
+          "type": "string"
+        },
+        "question": {
+          "discriminator": {
+            "mapping": {
+              "choice": "#/$defs/ChoiceQuestion",
+              "predicate": "#/$defs/PredicateQuestion",
+              "score": "#/$defs/ScoreQuestion"
+            },
+            "propertyName": "type"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/PredicateQuestion"
+            },
+            {
+              "$ref": "#/$defs/ChoiceQuestion"
+            },
+            {
+              "$ref": "#/$defs/ScoreQuestion"
+            }
+          ],
+          "title": "Question"
+        },
+        "refusalPolicy": {
+          "default": "error",
+          "enum": [
+            "error",
+            "fallback",
+            "interrupt"
+          ],
+          "title": "Refusalpolicy",
+          "type": "string"
+        }
+      },
+      "required": [
+        "provider",
+        "question",
+        "outputKey"
+      ],
+      "title": "DecisionModel",
+      "type": "object"
+    },
     "EdgeModel": {
       "additionalProperties": false,
       "properties": {
@@ -146,6 +269,17 @@
     "NodeModel": {
       "additionalProperties": false,
       "properties": {
+        "action": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ActionRefModel"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "approval": {
           "anyOf": [
             {
@@ -168,12 +302,36 @@
           ],
           "default": null
         },
+        "decision": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DecisionModel"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "destinations": {
           "items": {
             "type": "string"
           },
           "title": "Destinations",
           "type": "array"
+        },
+        "errorHandler": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Errorhandler"
         },
         "metadata": {
           "additionalProperties": true,
@@ -229,6 +387,27 @@
         }
       },
       "title": "NodeModel",
+      "type": "object"
+    },
+    "PredicateQuestion": {
+      "additionalProperties": false,
+      "properties": {
+        "prompt": {
+          "minLength": 1,
+          "title": "Prompt",
+          "type": "string"
+        },
+        "type": {
+          "const": "predicate",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "prompt"
+      ],
+      "title": "PredicateQuestion",
       "type": "object"
     },
     "RetryPolicyModel": {
@@ -334,6 +513,12 @@
           "default": null,
           "title": "Checkpointer"
         },
+        "deltaSnapshotFrequency": {
+          "default": 100,
+          "exclusiveMinimum": 0,
+          "title": "Deltasnapshotfrequency",
+          "type": "integer"
+        },
         "interruptAfter": {
           "items": {
             "type": "string"
@@ -362,6 +547,37 @@
         }
       },
       "title": "RuntimeModel",
+      "type": "object"
+    },
+    "ScoreQuestion": {
+      "additionalProperties": false,
+      "properties": {
+        "max": {
+          "title": "Max",
+          "type": "number"
+        },
+        "min": {
+          "title": "Min",
+          "type": "number"
+        },
+        "prompt": {
+          "minLength": 1,
+          "title": "Prompt",
+          "type": "string"
+        },
+        "type": {
+          "const": "score",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "prompt",
+        "min",
+        "max"
+      ],
+      "title": "ScoreQuestion",
       "type": "object"
     },
     "SecurityModel": {

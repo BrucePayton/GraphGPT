@@ -47,7 +47,7 @@ jobs:
         run: |
           uv pip install --python "$RUNNER_TEMP/graphgpt-minimum/bin/python" \
             -e '.[dev,langchain,mcp,cli]' \
-            'langgraph==1.2.16' \
+            'langgraph==1.2.18' \
             'langchain==1.4.6' \
             'langchain-core==1.6.12' \
             'langgraph-cli[inmem]==0.4.36'
@@ -57,6 +57,9 @@ jobs:
           "$RUNNER_TEMP/graphgpt-minimum/bin/python" -m pytest \
             tests/test_runtime_conformance.py \
             tests/test_runtime_security.py \
+            tests/test_runtime_recovery.py \
+            tests/test_decisions_actions.py \
+            tests/test_tasks_evaluation.py \
             tests/test_mcp.py \
             tests/test_tracing.py \
             tests/test_langgraph_cli_integration.py

@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 from graphgpt.domain.ir import (
+    ActionRefIR,
     ApprovalPolicyIR,
     ApprovalToolPolicyIR,
     CachePolicyIR,
+    DecisionIR,
     EdgeIR,
     GraphIR,
     NodeIR,
@@ -32,6 +34,28 @@ def to_ir(document: WorkflowDocument) -> GraphIR:
         NodeIR(
             id=name,
             use=item.use,
+            decision=(
+                DecisionIR(
+                    provider=item.decision.provider,
+                    question=item.decision.question.model_dump(),
+                    output_key=item.decision.output_key,
+                    refusal_policy=item.decision.refusal_policy,
+                    fallback=item.decision.fallback,
+                )
+                if item.decision
+                else None
+            ),
+            action=(
+                ActionRefIR(
+                    ref=item.action.ref,
+                    version=item.action.version,
+                    before=tuple(item.action.before),
+                    after=tuple(item.action.after),
+                )
+                if item.action
+                else None
+            ),
+            error_handler=item.error_handler,
             subgraph=(
                 SubgraphIR(
                     path=item.subgraph.path,
@@ -45,7 +69,11 @@ def to_ir(document: WorkflowDocument) -> GraphIR:
             config=item.with_,
             metadata=item.metadata,
             destinations=tuple(item.destinations),
-            writes=tuple(item.writes),
+            writes=tuple(
+                dict.fromkeys(
+                    [*item.writes, *([item.decision.output_key] if item.decision else [])]
+                )
+            ),
             retry=(
                 RetryPolicyIR(
                     initial_interval=item.retry.initial_interval,
@@ -105,6 +133,7 @@ def to_ir(document: WorkflowDocument) -> GraphIR:
             checkpointer=spec.runtime.checkpointer,
             store=spec.runtime.store,
             cache=spec.runtime.cache,
+            delta_snapshot_frequency=spec.runtime.delta_snapshot_frequency,
         ),
         allowed_modules=tuple(spec.security.allowed_modules),
         metadata={"labels": document.metadata.labels},

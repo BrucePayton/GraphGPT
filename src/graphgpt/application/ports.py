@@ -11,7 +11,7 @@ from graphgpt.domain.conversion import (
     Fidelity,
     UniversalAsset,
 )
-from graphgpt.domain.ir import ApprovalPolicyIR, GraphIR
+from graphgpt.domain.ir import ActionRefIR, ApprovalPolicyIR, DecisionIR, GraphIR
 from graphgpt.dsl.models import WorkflowDocument
 
 
@@ -24,6 +24,10 @@ class GraphCompiler(Protocol):
 
 
 class BindingResolver(Protocol):
+    def resolve_decision(self, decision: DecisionIR) -> Any: ...
+
+    def resolve_action(self, reference: ActionRefIR, graph: GraphIR) -> Any: ...
+
     def resolve_node(
         self,
         reference: str,

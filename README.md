@@ -37,7 +37,7 @@ uv run graphgpt run workflow.yaml --input '{"approved": true}'
 ```
 
 若要使用 `graphgpt dev` 的官方 CLI 委托，可在生成的项目中执行
-`uv add "graphgpt-builder[cli]>=0.10,<0.11"`。Langfuse 追踪同理使用 `langfuse` extra，
+`uv add "graphgpt-builder[cli]>=0.11,<0.12"`。Langfuse 追踪同理使用 `langfuse` extra，
 LangSmith SDK 已随核心 LangGraph 生态安装并通过标准环境变量启用。
 
 在 Python 中也可以只采用编译器核心：
@@ -199,3 +199,10 @@ uv build
 [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)。
 
 许可证：Apache-2.0。
+
+## 0.11 编译器能力更新
+
+新增类型化 Decision、精确版本 Action Registry、节点异常恢复和 DeltaChannel 快照策略。
+同时提供进程内异步任务生命周期及 LangSmith 评估清单/查询适配器。
+使用方法和验证边界见 [Typed workflows](docs/TYPED_WORKFLOWS.md)，
+可运行示例位于 [examples/typed-decision](examples/typed-decision)。

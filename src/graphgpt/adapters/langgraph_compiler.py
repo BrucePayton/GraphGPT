@@ -32,6 +32,10 @@ class LangGraphCompiler:
         for node in graph.nodes:
             if node.id in actions:
                 action = actions[node.id]
+            elif node.decision:
+                action = self._resolver.resolve_decision(node.decision)
+            elif node.action:
+                action = self._resolver.resolve_action(node.action, graph)
             else:
                 if node.use is None:
                     raise ValueError(f"subgraph node '{node.id}' was not resolved")
@@ -43,6 +47,11 @@ class LangGraphCompiler:
             builder.add_node(
                 node.id,
                 action,
+                error_handler=(
+                    self._resolver.resolve_node(node.error_handler, {})
+                    if node.error_handler
+                    else None
+                ),
                 metadata={**node.metadata, **trace_metadata(graph, node_id=node.id)},
                 retry_policy=(
                     RetryPolicy(
@@ -128,6 +137,17 @@ def _make_state_schema(graph: GraphIR) -> Any:
     for item in graph.state_fields:
         annotation = types.get(item.type, Any)
         if item.reducer:
+            if item.reducer == "delta-add":
+                from langgraph.channels import DeltaChannel
+
+                annotation = Annotated[
+                    annotation,
+                    DeltaChannel(
+                        _delta_add, snapshot_frequency=graph.runtime.delta_snapshot_frequency
+                    ),
+                ]
+                annotations[item.name] = annotation
+                continue
             reducer = reducers.get(item.reducer)
             if reducer is None:
                 reducer = self_resolver_error(item.reducer)
@@ -138,7 +158,12 @@ def _make_state_schema(graph: GraphIR) -> Any:
     )
 
 
+def _delta_add(current: Any, updates: Any) -> Any:
+    result = [] if current is None else list(current)
+    for update in updates:
+        result.extend(update)
+    return result
+
+
 def self_resolver_error(reference: str) -> Any:
-    raise ValueError(
-        f"unknown reducer '{reference}'; v0.1 supports 'add' and 'messages' built-ins"
-    )
+    raise ValueError(f"unknown reducer '{reference}'; v0.1 supports 'add' and 'messages' built-ins")

@@ -57,7 +57,7 @@ def initialize_project(template: str, destination: Path) -> list[Path]:
         f'name = "graphgpt-{template}"\n'
         'version = "0.1.0"\n'
         'requires-python = ">=3.11"\n'
-        'dependencies = ["graphgpt-builder>=0.10,<0.11", "langgraph>=1.2.16,<2.0"]\n',
+        'dependencies = ["graphgpt-builder>=0.11,<0.12", "langgraph>=1.2.18,<2.0"]\n',
         encoding="utf-8",
     )
     created.append(package_config)
@@ -128,7 +128,7 @@ description = "A community plugin for GraphGPT"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {{ text = "Apache-2.0" }}
-dependencies = ["graphgpt-builder>=0.8,<0.9"]
+dependencies = ["graphgpt-builder>=0.11,<0.12"]
 
 [project.optional-dependencies]
 dev = ["mypy>=1.15", "pytest>=8.3", "ruff>=0.11"]

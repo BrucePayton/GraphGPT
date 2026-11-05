@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "graphgpt-builder"
-version = "0.10.1"
+version = "0.11.0"
 description = "Declarative, extensible compiler from versioned YAML workflows to native LangGraph"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -21,7 +21,7 @@ classifiers = [
   "Typing :: Typed",
 ]
 dependencies = [
-  "langgraph>=1.2.16,<2.0",
+  "langgraph>=1.2.18,<2.0",
   "pydantic>=2.10,<3.0",
   "PyYAML>=6.0,<7.0",
   "typer>=0.15,<1.0",

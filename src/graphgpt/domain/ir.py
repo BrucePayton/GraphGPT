@@ -5,7 +5,7 @@ from typing import Any, Literal
 
 from graphgpt.domain.diagnostics import SourceLocation
 
-IR_VERSION = "0.4"
+IR_VERSION = "0.5"
 BUILTIN_STATE_TYPES = frozenset(
     {
         "any",
@@ -22,7 +22,7 @@ BUILTIN_STATE_TYPES = frozenset(
         "messages",
     }
 )
-BUILTIN_REDUCERS = frozenset({"add", "messages"})
+BUILTIN_REDUCERS = frozenset({"add", "messages", "delta-add"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -72,6 +72,23 @@ class SubgraphIR:
 
 
 @dataclass(frozen=True, slots=True)
+class DecisionIR:
+    provider: str
+    question: dict[str, Any]
+    output_key: str
+    refusal_policy: Literal["error", "fallback", "interrupt"] = "error"
+    fallback: Any = None
+
+
+@dataclass(frozen=True, slots=True)
+class ActionRefIR:
+    ref: str
+    version: str
+    before: tuple[str, ...] = ()
+    after: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True, slots=True)
 class NodeIR:
     id: str
     use: str | None = None
@@ -83,6 +100,9 @@ class NodeIR:
     retry: RetryPolicyIR | None = None
     cache: CachePolicyIR | None = None
     approval: ApprovalPolicyIR | None = None
+    decision: DecisionIR | None = None
+    action: ActionRefIR | None = None
+    error_handler: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -107,6 +127,7 @@ class RuntimeIR:
     checkpointer: str | None = None
     store: str | None = None
     cache: str | None = None
+    delta_snapshot_frequency: int = 100
 
 
 @dataclass(frozen=True, slots=True)

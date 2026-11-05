@@ -25,6 +25,7 @@ def trace_metadata(graph: GraphIR, *, node_id: str | None = None) -> dict[str, s
         "graph_id": graph.name,
         "graph_version": graph_version(graph),
         "generator_version": __version__,
+        "compiler_version": __version__,
     }
     if node_id is not None:
         metadata["node_id"] = node_id

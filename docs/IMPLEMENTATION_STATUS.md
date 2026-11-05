@@ -1,6 +1,6 @@
 # 实现状态与证据索引
 
-验证日期：2026-10-21。状态含义：**实现**表示代码存在，**验证**表示自动化测试通过，
+验证日期：2026-11-05。状态含义：**实现**表示代码存在，**验证**表示自动化测试通过，
 **E2E** 表示生成工程已通过外部工具链。提交列记录首次引入该能力的主线提交；0.10.0
 新增项目在发布提交与标签落地后固定。
 
@@ -20,6 +20,11 @@
 | LangSmith / Trace Metadata | 本地契约已验证；远程 Trace 需凭据 | `observability.py`, `tracing.py` | `test_more_contracts.py`, `test_tracing.py` | `28376d5`, 0.10.0 待发布 |
 | LangGraph CLI 生成工程 | E2E | `project.py`, templates, `langgraph.json` | `test_project.py`, `test_langgraph_cli_integration.py` | `ee1a6c8` |
 | Dify / n8n 导出 | 实现、验证 | `adapters/ecosystems.py` | `test_ecosystems.py` | `992f5a1` |
+| Typed Decision IR | 实现、验证；远程模型适配由应用提供 | `decisions.py`, `dsl/models.py` | `test_decisions_actions.py` | 0.11.0 |
+| Action Registry / 版本 / Hook | 实现、验证 | `actions.py`, `registry.py` | `test_decisions_actions.py` | 0.11.0 |
+| 异常恢复 / Delta snapshot policy | 实现、验证 | `adapters/langgraph_compiler.py` | `test_runtime_recovery.py` | 0.11.0 |
+| Async Task 生命周期 | 进程内实现、验证；非持久化调度服务 | `tasks.py` | `test_tasks_evaluation.py` | 0.11.0 |
+| Evaluation Manifest / LangSmith SDK 查询 | 本地契约验证；远程未验证 | `evaluation.py` | `test_tasks_evaluation.py` | 0.11.0 |
 
 ## 可重复验证
 
